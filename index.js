@@ -4,6 +4,15 @@ const fetch = require("node-fetch");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// --- CORS for browser clients (Flutter web) ---
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.status(204).end();
+  next();
+});
+
 app.get("/", (_req, res) => res.send("TTS server is running!"));
 
 app.get("/tts", async (req, res) => {
@@ -34,7 +43,6 @@ app.get("/tts", async (req, res) => {
 
     res.setHeader("Content-Type", "audio/mpeg");
     r.body.pipe(res);
-
   } catch (e) {
     res.status(500).send(String(e));
   }
