@@ -45,7 +45,9 @@ app.get("/tts", async (req, res) => {
 
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Disposition', 'inline; filename="tts.mp3"');
+    
     r.body.pipe(res);
+    
   } catch (e) {
     res.status(500).send(String(e));
   }
