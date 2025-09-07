@@ -1,6 +1,6 @@
 // index.js (Replit-ready)
 const express = require("express");
-import fetch from "node-fetch";
+const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
 const app = express();
 const PORT = process.env.PORT || 5000;
 
