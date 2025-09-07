@@ -1,6 +1,6 @@
 // index.js (Replit-ready)
 const express = require("express");
-const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
+const fetch = require("node-fetch");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 5000;
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, xi-api-key");
   if (req.method === "OPTIONS") return res.status(204).end();
   next();
 });
