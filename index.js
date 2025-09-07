@@ -1,6 +1,6 @@
 // index.js (Replit-ready, with CORS + node-fetch v2)
 const express = require("express");
-const fetch = require("node-fetch"); // v2 (you already installed this)
+const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
 const app = express();
 const PORT = process.env.PORT || 5000;
 
