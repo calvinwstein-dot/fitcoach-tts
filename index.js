@@ -4,12 +4,13 @@ const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// --- CORS (allow requests from your Flutter web app) ---
-app.use((req, res, next) => {               // NEW
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
+// CORS + streaming-friendly headers
+app.use((req, res, next) => {
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  });
   next();
 });                                         // NEW
 // ------------------------------------------------------
@@ -42,7 +43,8 @@ app.get("/tts", async (req, res) => {
       return res.status(500).send(`ElevenLabs error: ${msg}`);
     }
 
-    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Disposition', 'inline; filename="tts.mp3"');
     r.body.pipe(res);
   } catch (e) {
     res.status(500).send(String(e));
