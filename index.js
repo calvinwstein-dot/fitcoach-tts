@@ -1,17 +1,18 @@
-// index.js (Replit-ready)
+// index.js (Replit-ready, with CORS + node-fetch v2)
 const express = require("express");
-const fetch = require("node-fetch");
+const fetch = require("node-fetch"); // v2 (you already installed this)
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// --- CORS for browser clients (Flutter web) ---
-app.use((req, res, next) => {
+// --- CORS (allow requests from your Flutter web app) ---
+app.use((req, res, next) => {               // NEW
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, xi-api-key");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
-});
+});                                         // NEW
+// ------------------------------------------------------
 
 app.get("/", (_req, res) => res.send("TTS server is running!"));
 
