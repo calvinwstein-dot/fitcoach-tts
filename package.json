@@ -12,7 +12,9 @@
   "license": "ISC",
   "dependencies": {
     "@types/node": "^22.13.11",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
+    "morgan": "^1.10.1",
     "node-fetch": "^3.3.2"
   }
 }
