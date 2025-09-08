@@ -171,6 +171,53 @@ app.get("/voices", async (_req, res) => {
   }
 });
 
+// --------------------- GET /tts/stream --------------------------------
+// Streaming TTS endpoint
+app.get("/tts/stream", async (req, res) => {
+  try {
+    const text = (req.query.text || "").toString();
+    if (!text.trim()) return res.status(400).send("No text provided");
+
+    const voice_id = (req.query.voice_id || DEFAULT_VOICE).toString();
+    const model_id = (req.query.model_id || DEFAULT_MODEL).toString();
+    
+    if (!ELEVEN_API_KEY) throw new Error("ELEVEN_API_KEY not configured on server.");
+    
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voice_id}/stream`;
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "xi-api-key": ELEVEN_API_KEY,
+        accept: "audio/mpeg",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: model_id,
+        voice_settings: {
+          stability: parseFloat(req.query.stability) || 0.4,
+          similarity_boost: parseFloat(req.query.similarity_boost) || 0.85
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new Error(`ElevenLabs streaming error (${response.status}): ${errorText}`);
+    }
+
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Transfer-Encoding", "chunked");
+    
+    // Stream the response directly to the client
+    response.body.pipe(res);
+    
+  } catch (e) {
+    res.status(500).send(String(e.message || e));
+  }
+});
+
 // --------------------- Start server -----------------------------------
 app.listen(PORT, () => {
   console.log(`✅ TTS server running on ${PORT}`);
