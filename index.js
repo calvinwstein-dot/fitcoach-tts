@@ -25,6 +25,11 @@ app.use(cors()); // allow all origins by default
 // Simple health root
 app.get("/", (_req, res) => res.send("TTS server is running!"));
 
+app.get('/3d44', (_req, res) => {
+  const k = (process.env.ELEVEN_API_KEY || '');
+  res.send(`3d44: ${k.slice(-4)}`);
+});
+
 // ------------- In-memory LRU-ish cache to save credits ----------------
 const CACHE_MAX = 150;              // ~150 clips
 const cache = new Map();            // key -> Buffer
@@ -172,4 +177,7 @@ app.get("/voices", async (_req, res) => {
 // --------------------- Start server -----------------------------------
 app.listen(PORT, () => {
   console.log(`✅ TTS server running on ${PORT}`);
+});app.get('/key-tail', (_req, res) => {
+  const k = (process.env.ELEVEN_API_KEY || '');
+  res.send(`Active key tail: ${k.slice(-4)}`);
 });
