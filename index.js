@@ -6,10 +6,7 @@ const fetch = require("node-fetch"); // v2 on Replit
 const morgan = require("morgan");
 const cors = require("cors");
 
-const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY;
-if (!ELEVEN_API_KEY) {
-  console.warn("⚠️ ELEVEN_API_KEY not set in Replit Secrets. Set it before using /tts.");
-}
+const ELEVEN_API_KEY = "dfd16d29e66b3bd218e543f42a265fe67b55ea14469abb4c79e76c7016277aef";
 
 const DEFAULT_VOICE = process.env.DEFAULT_VOICE || "21m00Tcm4TlvDq8ikWAM"; // change if you like
 const DEFAULT_MODEL = process.env.MODEL_ID || "eleven_multilingual_v2";     // stable, natural
@@ -26,7 +23,7 @@ app.use(cors()); // allow all origins by default
 app.get("/", (_req, res) => res.send("TTS server is running!"));
 
 app.get('/3d44', (_req, res) => {
-  const k = (process.env.ELEVEN_API_KEY || '');
+  const k = ELEVEN_API_KEY;
   res.send(`3d44: ${k.slice(-4)}`);
 });
 
