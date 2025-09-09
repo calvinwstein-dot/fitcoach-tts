@@ -1,30 +1,28 @@
-// index.js — FitCoach TTS server (Replit)
-// Node 18+, node-fetch v2, express
-
 const express = require("express");
-const fetch = require("node-fetch"); // v2 on Replit
+const fetch = require("node-fetch"); // v2
 const morgan = require("morgan");
 const cors = require("cors");
 
-const ELEVEN_API_KEY = "dfd16d29e66b3bd218e543f42a265fe67b55ea14469abb4c79e76c7016277aef";
+const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY;  // <- use secret
+if (!ELEVEN_API_KEY) {
+  console.warn("⚠️ ELEVEN_API_KEY not set in Replit Secrets.");
+}
 
-const DEFAULT_VOICE = process.env.DEFAULT_VOICE || "21m00Tcm4TlvDq8ikWAM"; // change if you like
-const DEFAULT_MODEL = process.env.MODEL_ID || "eleven_multilingual_v2";     // stable, natural
+const DEFAULT_VOICE = process.env.DEFAULT_VOICE || "21m00Tcm4TlvDq8ikWAM";
+const DEFAULT_MODEL = process.env.MODEL_ID || "eleven_multilingual_v2";
 const PORT = process.env.PORT || 5000;
 
 const app = express();
-
-// Logging + JSON body support + CORS
 app.use(morgan("tiny"));
 app.use(express.json({ limit: "1mb" }));
-app.use(cors()); // allow all origins by default
+app.use(cors());
 
-// Simple health root
 app.get("/", (_req, res) => res.send("TTS server is running!"));
 
-app.get('/3d44', (_req, res) => {
-  const k = ELEVEN_API_KEY;
-  res.send(`3d44: ${k.slice(-4)}`);
+// debug tail (safe)
+app.get("/key-tail", (_req, res) => {
+  const k = ELEVEN_API_KEY || "";
+  res.send(`Active key tail: ${k.slice(-4)}`);
 });
 
 // ------------- In-memory LRU-ish cache to save credits ----------------
@@ -171,8 +169,6 @@ app.get("/voices", async (_req, res) => {
   }
 });
 
-// --------------------- GET /tts/stream --------------------------------
-// Streaming TTS endpoint
 app.get("/tts/stream", async (req, res) => {
   try {
     const text = (req.query.text || "").toString();
@@ -180,7 +176,6 @@ app.get("/tts/stream", async (req, res) => {
 
     const voice_id = (req.query.voice_id || DEFAULT_VOICE).toString();
     const model_id = (req.query.model_id || DEFAULT_MODEL).toString();
-
     if (!ELEVEN_API_KEY) throw new Error("ELEVEN_API_KEY not configured on server.");
 
     const url = `https://api.elevenlabs.io/v1/text-to-speech/${voice_id}/stream`;
@@ -193,26 +188,23 @@ app.get("/tts/stream", async (req, res) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        text: text,
-        model_id: model_id,
+        text,
+        model_id,
         voice_settings: {
-          stability: parseFloat(req.query.stability) || 0.4,
-          similarity_boost: parseFloat(req.query.similarity_boost) || 0.85
+          stability: Number(req.query.stability ?? 0.4),
+          similarity_boost: Number(req.query.similarity_boost ?? 0.85),
         },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      throw new Error(`ElevenLabs streaming error (${response.status}): ${errorText}`);
+      return res.status(502).send(`ElevenLabs streaming error (${response.status}): ${errorText}`);
     }
 
     res.setHeader("Content-Type", "audio/mpeg");
-    res.setHeader("Transfer-Encoding", "chunked");
-
-    // Stream the response directly to the client
+    res.setHeader("Content-Disposition", 'inline; filename="tts.mp3"');
     response.body.pipe(res);
-
   } catch (e) {
     res.status(500).send(String(e.message || e));
   }
@@ -221,7 +213,4 @@ app.get("/tts/stream", async (req, res) => {
 // --------------------- Start server -----------------------------------
 app.listen(PORT, () => {
   console.log(`✅ TTS server running on ${PORT}`);
-});app.get('/key-tail', (_req, res) => {
-  const k = (process.env.ELEVEN_API_KEY || '');
-  res.send(`Active key tail: ${k.slice(-4)}`);
 });
