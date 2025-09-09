@@ -180,11 +180,11 @@ app.get("/tts/stream", async (req, res) => {
 
     const voice_id = (req.query.voice_id || DEFAULT_VOICE).toString();
     const model_id = (req.query.model_id || DEFAULT_MODEL).toString();
-    
+
     if (!ELEVEN_API_KEY) throw new Error("ELEVEN_API_KEY not configured on server.");
-    
+
     const url = `https://api.elevenlabs.io/v1/text-to-speech/${voice_id}/stream`;
-    
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -209,10 +209,10 @@ app.get("/tts/stream", async (req, res) => {
 
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Transfer-Encoding", "chunked");
-    
+
     // Stream the response directly to the client
     response.body.pipe(res);
-    
+
   } catch (e) {
     res.status(500).send(String(e.message || e));
   }
