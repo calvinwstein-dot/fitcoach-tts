@@ -26,6 +26,29 @@ app.use(cors()); // allow all origins
 
 app.get("/", (_req, res) => res.send("TTS server is running!"));
 
+// Get available voices from Eleven Labs
+app.get('/voices', async (req, res) => {
+  try {
+    const r = await fetch('https://api.elevenlabs.io/v1/voices', {
+      method: 'GET',
+      headers: {
+        'xi-api-key': process.env.ELEVEN_API_KEY,
+        'accept': 'application/json',
+      },
+    });
+
+    if (!r.ok) {
+      const msg = await r.text();
+      return res.status(500).json({ error: `ElevenLabs error: ${msg}` });
+    }
+
+    const voicesData = await r.json();
+    res.json(voicesData);
+  } catch (e) {
+    res.status(500).json({ error: String(e.message || e) });
+  }
+});
+
 // small helper that serves a Buffer as MP3 with Range support
 function sendMp3Buffer(req, res, mp3Buffer, filename = 'tts.mp3') {
   res.setHeader('Accept-Ranges', 'bytes');
