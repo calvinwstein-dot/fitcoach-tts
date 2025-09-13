@@ -1,0 +1,24 @@
+# Gitpod configuration for TTS Server
+image: gitpod/workspace-node
+
+# Install dependencies and start the server
+tasks:
+  - name: Install and Start TTS Server
+    init: |
+      npm install
+    command: |
+      npm start
+
+# Configure ports
+ports:
+  - port: 5000
+    onOpen: open-browser
+    description: TTS Server
+    visibility: public
+
+# VS Code extensions that might be helpful
+vscode:
+  extensions:
+    - ms-vscode.vscode-json
+    - ms-vscode.js-debug
+    - bradlc.vscode-tailwindcss
