@@ -49,39 +49,35 @@ app.get('/voices', async (req, res) => {
   }
 });
 
-// small helper that serves a Buffer as MP3 with Range support
+// helper that serves a Buffer as MP3 with Range support
 function sendMp3Buffer(req, res, mp3Buffer, filename = 'tts.mp3') {
   res.setHeader('Accept-Ranges', 'bytes');
-
   const range = req.headers.range;
   const size = mp3Buffer.length;
 
   if (range) {
-    // bytes=start-end
-    const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
-    const start = parseInt(startStr, 10);
-    const end = endStr ? parseInt(endStr, 10) : size - 1;
-
-    if (isNaN(start) || isNaN(end) || start >= size || end >= size || start > end) {
+    const [s, e] = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(s, 10);
+    const end = e ? parseInt(e, 10) : size - 1;
+    if (isNaN(start) || isNaN(end) || start > end || end >= size) {
       res.status(416).setHeader('Content-Range', `bytes */${size}`).end();
       return;
     }
     const chunk = mp3Buffer.slice(start, end + 1);
-    res.status(206);
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-    res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
-    res.setHeader('Content-Length', String(chunk.length));
-    res.end(chunk);
+    res.status(206)
+       .setHeader('Content-Type', 'audio/mpeg')
+       .setHeader('Content-Disposition', 'inline; filename="tts.mp3"')
+       .setHeader('Content-Range', `bytes ${start}-${end}/${size}`)
+       .setHeader('Content-Length', String(chunk.length))
+       .end(chunk);
     return;
   }
 
-  // full file
-  res.status(200);
-  res.setHeader('Content-Type', 'audio/mpeg');
-  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  res.setHeader('Content-Length', String(size));
-  res.end(mp3Buffer);
+  res.status(200)
+     .setHeader('Content-Type', 'audio/mpeg')
+     .setHeader('Content-Disposition', 'inline; filename="tts.mp3"')
+     .setHeader('Content-Length', String(size))
+     .end(mp3Buffer);
 }
 
 // ElevenLabs API function
@@ -110,14 +106,13 @@ async function elevenTTS(payload) {
   return Buffer.from(arrayBuffer);
 }
 
-// ---- unified GET /tts & GET /tts.mp3 ----
+// GET /tts.mp3 (alias)
 app.get(['/tts', '/tts.mp3'], async (req, res) => {
   try {
-    const text = (req.query.text || '').toString();
+    const text = String(req.query.text || '');
     if (!text.trim()) return res.status(400).send('No text provided');
-
-    const voice_id = (req.query.voice || DEFAULT_VOICE).toString();
-    const model_id = (req.query.model || DEFAULT_MODEL).toString();
+    const voice_id = String(req.query.voice || DEFAULT_VOICE);
+    const model_id = String(req.query.model || DEFAULT_MODEL);
 
     const payload = {
       text,
@@ -132,11 +127,10 @@ app.get(['/tts', '/tts.mp3'], async (req, res) => {
     const key = cacheKey(payload);
     let mp3 = cacheGet(key);
     if (!mp3) {
-      mp3 = await elevenTTS(payload);   // your existing function
+      mp3 = await elevenTTS(payload);
       cacheSet(key, mp3);
     }
 
-    // NOTE filename hint helps some browsers
     sendMp3Buffer(req, res, mp3, 'tts.mp3');
   } catch (e) {
     res.status(500).send(String(e.message || e));
