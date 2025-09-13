@@ -98,7 +98,6 @@ app.get(['/tts', '/tts.mp3'], async (req, res) => {
 
     const payload = {
       text,
-      voice_id,
       model_id,
       voice_settings: {
         stability: Number(req.query.stability ?? 0.4),
