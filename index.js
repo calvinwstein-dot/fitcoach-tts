@@ -83,6 +83,14 @@ function sendMp3Buffer(req, res, mp3Buffer, filename = 'tts.mp3') {
 // ElevenLabs API function
 async function elevenTTS(payload) {
   const { text, voice_id, model_id, voice_settings } = payload;
+  
+  const mergedVoiceSettings = {
+    stability: voice_settings?.stability ?? 0.4,
+    similarity_boost: voice_settings?.similarity_boost ?? 0.85,
+    style: voice_settings?.style ?? 0.6,           // 0–1: higher = more expressive
+    use_speaker_boost: voice_settings?.use_speaker_boost ?? true,
+  };
+
   const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}`, {
     method: "POST",
     headers: {
@@ -93,7 +101,7 @@ async function elevenTTS(payload) {
     body: JSON.stringify({
       text,
       model_id,
-      voice_settings,
+      voice_settings: mergedVoiceSettings,
     }),
   });
 
@@ -121,6 +129,8 @@ app.get(['/tts', '/tts.mp3'], async (req, res) => {
       voice_settings: {
         stability: Number(req.query.stability ?? 0.4),
         similarity_boost: Number(req.query.similarity ?? 0.85),
+        style: Number(req.query.style ?? 0.6),
+        use_speaker_boost: req.query.use_speaker_boost !== 'false',
       },
     };
 
