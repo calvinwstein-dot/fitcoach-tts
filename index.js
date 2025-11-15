@@ -23,6 +23,7 @@ const PORT = process.env.PORT || 5000;
 
 // --- CORS (keep) ---
 app.use(cors()); // allow all origins
+app.use(express.static('.')); // serve static files
 
 app.get("/", (_req, res) => res.send("TTS server is running!"));
 

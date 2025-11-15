@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FitCoach Dashboard</title>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 20px; color: #111 }
+    .container { max-width: 980px; margin: 0 auto }
+    h1 { margin-bottom: 6px }
+    .row { display:flex; gap:16px; margin-bottom:12px; align-items:center }
+    .card { padding:14px; border:1px solid #eee; border-radius:8px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.03) }
+    .big { font-size:2rem; font-weight:700 }
+    label { font-weight:600 }
+    select,input[type=text],input[type=number] { padding:8px; border-radius:6px; border:1px solid #ddd }
+    button { padding:10px 14px; border-radius:6px; border:none; background:#0b6efd; color:white; cursor:pointer }
+    button.secondary { background:#666 }
+    .muted { color:#666 }
+    .controls { display:flex; gap:12px; flex-wrap:wrap }
+    .left { flex:1 }
+    .right { width:340px }
+    .log { height:160px; overflow:auto; background:#fafafa; padding:8px; border-radius:6px; border:1px solid #eee }
+    .row .card { flex:1 }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>FitCoach — Live Dashboard</h1>
+    <p class="muted">Simulate or provide live telemetry; choose voice and enable auto voice prompts. Uses your local `/tts` endpoint.</p>
+
+    <div class="row">
+      <div class="card left">
+        <div style="display:flex;gap:18px;align-items:center">
+          <div>
+            <div class="muted">Pace</div>
+            <div class="big" id="paceDisplay">5:00</div>
+            <div class="muted">(min/km)</div>
+          </div>
+          <div>
+            <div class="muted">Heart Rate</div>
+            <div class="big" id="hrDisplay">140</div>
+            <div class="muted">bpm</div>
+          </div>
+          <div>
+            <div class="muted">Distance</div>
+            <div class="big" id="distDisplay">0.00</div>
+            <div class="muted">km</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px" class="controls">
+          <div>
+            <label>Target Pace (min/km)</label><br>
+            <input id="targetPace" type="text" value="5:00" />
+          </div>
+          <div>
+            <label>HR Zone Target (bpm)</label><br>
+            <input id="targetHR" type="number" value="150" />
+          </div>
+          <div>
+            <label>Auto Prompts</label><br>
+            <button id="toggleAuto">Enable</button>
+          </div>
+        </div>
+
+        <hr />
+        <div style="display:flex;gap:12px;align-items:center">
+          <div>
+            <label>Adjust Pace</label><br>
+            <input id="paceSlider" type="range" min="300" max="900" value="300" />
+            <div class="muted">Use slider to change pace (seconds per km). Lower = faster.</div>
+          </div>
+          <div>
+            <label>Adjust HR</label><br>
+            <input id="hrSlider" type="range" min="60" max="200" value="140" />
+          </div>
+          <div>
+            <label>Distance +</label><br>
+            <button id="addDistance">+0.1 km</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card right">
+        <div>
+          <label>Voice</label><br>
+          <select id="voices"></select>
+        </div>
+
+        <div style="margin-top:10px">
+          <label>Realism / Expressiveness</label><br>
+          <input id="realism" type="range" min="0" max="1" step="0.1" value="0.6" />
+        </div>
+
+        <div style="margin-top:10px">
+          <label>Prompt Style</label><br>
+          <select id="promptStyle" style="width:100%">
+            <option value="motivational">Motivational</option>
+            <option value="calm">Calm</option>
+            <option value="technical">Technical</option>
+          </select>
+        </div>
+
+        <div style="margin-top:10px">
+          <label>Manual Prompt</label><br>
+          <input id="manualText" type="text" placeholder="Type a message" style="width:100%" />
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button id="speakBtn">Speak</button>
+            <button class="secondary" id="sampleBreath">Breathing</button>
+            <button class="secondary" id="samplePush">Push</button>
+          </div>
+        </div>
+
+        <hr />
+        <div>
+          <label>Event Log</label>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="muted">Notes: pace units are min/km. You can adjust sliders to simulate a run. Auto prompts will react to pace/HR relative to targets and use the selected voice to play TTS audio.</p>
+  </div>
+
+  <audio id="player" controls style="display:none"></audio>
+
+  <script>
+    // Helpers
+    const secToMinSec = s => {
+      const m = Math.floor(s/60);
+      const sec = Math.round(s%60).toString().padStart(2,'0');
+      return m + ':' + sec;
+    }
+
+    const parseMinSec = (str) => {
+      const parts = String(str).split(':').map(p=>Number(p));
+      if (parts.length===2) return parts[0]*60 + parts[1];
+      return Number(str);
+    }
+
+    // Elements
+    const paceSlider = document.getElementById('paceSlider');
+    const hrSlider = document.getElementById('hrSlider');
+    const paceDisplay = document.getElementById('paceDisplay');
+    const hrDisplay = document.getElementById('hrDisplay');
+    const distDisplay = document.getElementById('distDisplay');
+    const addDistanceBtn = document.getElementById('addDistance');
+    const toggleAuto = document.getElementById('toggleAuto');
+    const voicesSelect = document.getElementById('voices');
+    const player = document.getElementById('player');
+    const realism = document.getElementById('realism');
+    const promptStyle = document.getElementById('promptStyle');
+    const manualText = document.getElementById('manualText');
+    const speakBtn = document.getElementById('speakBtn');
+    const sampleBreath = document.getElementById('sampleBreath');
+    const samplePush = document.getElementById('samplePush');
+    const logEl = document.getElementById('log');
+    const targetPaceInput = document.getElementById('targetPace');
+    const targetHRInput = document.getElementById('targetHR');
+
+    // State
+    let pace = 300; // seconds per km (5:00)
+    let hr = 140;
+    let dist = 0.0;
+    let auto = false;
+    let voices = [];
+
+    function log(msg){
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML = `<div>[${time}] ${msg}</div>` + logEl.innerHTML;
+    }
+
+    // Populate voices: limit to 3 male and 3 female (infer gender if necessary)
+    async function loadVoices(){
+      try{
+        const r = await fetch('/voices');
+        const data = await r.json();
+        voices = data.voices || data || [];
+        const male = [];
+        const female = [];
+        const unknown = [];
+
+        // common name heuristics to infer gender when API doesn't provide it
+        const maleNames = ['roger','clyde','john','david','michael','james','robert','chris','daniel','tom','alex'];
+        const femaleNames = ['sarah','emma','olivia','ava','sophia','mia','isabella','emily','anna','kate','lisa'];
+
+        voices.forEach(v=>{
+          const id = v.voice_id || v.id || v.voiceId || v.id;
+          const name = (v.name || v.voice_name || id || '').toString();
+          const genderRaw = (v.gender || (v.metadata && v.metadata.gender) || '').toString().toLowerCase();
+          let g = null;
+          if (genderRaw) {
+            if (genderRaw.includes('male')) g = 'male';
+            else if (genderRaw.includes('female')) g = 'female';
+          }
+          if (!g) {
+            const first = name.split(' ')[0].toLowerCase();
+            if (maleNames.includes(first)) g = 'male';
+            else if (femaleNames.includes(first)) g = 'female';
+          }
+
+          const obj = { id, name };
+          if (g === 'male') male.push(obj);
+          else if (g === 'female') female.push(obj);
+          else unknown.push(obj);
+        });
+
+        // Fill up to 3 each, using unknown as fallback
+        const take = (arr, n) => arr.slice(0,n);
+        let males = take(male,3);
+        let females = take(female,3);
+        if (males.length < 3) {
+          const needed = 3 - males.length;
+          males = males.concat(take(unknown.splice(0, needed), needed));
+        }
+        if (females.length < 3) {
+          const needed = 3 - females.length;
+          females = females.concat(take(unknown.splice(0, needed), needed));
+        }
+
+        voicesSelect.innerHTML = '';
+        const addOpt = (optgroupLabel, list)=>{
+          if (list.length===0) return;
+          const group = document.createElement('optgroup');
+          group.label = optgroupLabel;
+          list.forEach(v=>{
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = v.name;
+            group.appendChild(opt);
+          });
+          voicesSelect.appendChild(group);
+        }
+
+        addOpt('Female', females);
+        addOpt('Male', males);
+
+        // If still empty, fall back to listing all voices
+        if (voicesSelect.options.length === 0){
+          voices.forEach(v=>{
+            const opt = document.createElement('option');
+            opt.value = v.voice_id || v.id || v.voiceId || v.id;
+            opt.textContent = v.name || v.voice_name || v.id;
+            voicesSelect.appendChild(opt);
+          });
+        }
+
+        log('Loaded voices (female: ' + females.length + ', male: ' + males.length + ')');
+      }catch(e){
+        log('Could not load voices: ' + e.message);
+      }
+    }
+
+    // Update displays
+    function updateDisplays(){
+      paceDisplay.textContent = secToMinSec(pace);
+      hrDisplay.textContent = hr;
+      distDisplay.textContent = dist.toFixed(2);
+      paceSlider.value = pace;
+      hrSlider.value = hr;
+    }
+
+    // Generate realistic messages organized by prompt style
+    const templates = {
+      motivational: {
+        push: [
+          "Yes — push now for 30 seconds. Keep your form and give me everything.",
+          "Nice rhythm. Accelerate — quick feet, strong arms, breathe with purpose.",
+          "One hard minute. Dig deep — you can own this."
+        ],
+        slowDown: [
+          "Easy now — breathe deep and settle into a steady rhythm.",
+          "Take two deep breaths and recover. Focus on long, calm steps.",
+          "Relax your shoulders, find your pace, and conserve energy." 
+        ],
+        status: [
+          "Status: pace {pace}, heart rate {hr} bpm, distance {dist} km. Keep it steady.",
+          "You've reached {dist} km. Pace {pace}, HR {hr}. Stay focused and controlled." 
+        ],
+        breath: [
+          "Breathe in for three, out for four. Match your steps to the breath.",
+          "Slow breath — in two, three; out two, three, four. Find the rhythm.",
+          "Inhale... exhale... steady now. Keep that control." 
+        ]
+      },
+      calm: {
+        push: [
+          "Increase gently for a short while; keep your breathing even.",
+          "Nudge the pace up — soft and controlled. Maintain relaxed shoulders.",
+          "A gentle push now. Stay light on your feet and breathe calmly."
+        ],
+        slowDown: [
+          "Ease off gradually and breathe through your nose when you can.",
+          "Slow down a touch; let your heart rate settle and your shoulders drop.",
+          "Take long, smooth breaths and reduce effort to recover." 
+        ],
+        status: [
+          "Current pace {pace}, heart rate {hr} bpm, distance {dist} kilometers.",
+          "At {dist} km — maintain a calm, steady pace of {pace}." 
+        ],
+        breath: [
+          "Breathe in gently for three, out for four. Keep the exhale longer.",
+          "Gentle rhythm: in two, three; out two, three, four. Relax.",
+          "Slow inhale... long exhale... match the calm of your steps." 
+        ]
+      },
+      technical: {
+        push: [
+          "Increase cadence by five steps per minute and maintain turnover.",
+          "Shorten ground contact and increase turnover for the next interval.",
+          "Pick up the cadence — focus on quick, light steps for sixty seconds."
+        ],
+        slowDown: [
+          "Reduce pace by 10% and extend your stride slightly to lower intensity.",
+          "Drop your cadence and lengthen the recovery phase between intervals.",
+          "Shift to relaxed form: lower cadence, longer stride, easy breathing." 
+        ],
+        status: [
+          "Telemetry: pace {pace}, HR {hr} bpm, distance {dist} km. Maintain target zone.",
+          "Segment complete: {dist} km, pace {pace}, heart rate {hr}. Adjust as needed." 
+        ],
+        breath: [
+          "Use a 3:4 breathing pattern — inhale 3, exhale 4 — and sync with steps.",
+          "Control breathing: two quick inhales, one long exhale. Keep it even.",
+          "Breathe through diaphragmatic pattern: in three, out four. Match cadence." 
+        ]
+      }
+    }
+
+    function chooseTemplate(kind, vars={}, style='motivational'){
+      const styleSet = templates[style] || templates['motivational'];
+      const arr = (styleSet && styleSet[kind]) ? styleSet[kind] : [kind];
+      const t = arr[Math.floor(Math.random()*arr.length)];
+      return t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
+    }
+
+    // Ask backend to synthesize and play TTS
+    async function speakText(text){
+      const voice = voicesSelect.value || '';
+      const style = Number(realism.value) || 0.6;
+      const stability = 0.4 + (style * 0.5);
+      const similarity = 0.7 + (style * 0.3);
+      log('Speaking: ' + text);
+      try{
+        const url = `/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}&style=${encodeURIComponent(style)}&stability=${encodeURIComponent(stability)}&similarity=${encodeURIComponent(similarity)}`;
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('TTS failed: ' + r.status);
+        const blob = await r.blob();
+        const src = URL.createObjectURL(blob);
+        player.src = src;
+        player.style.display = 'block';
+        player.play().catch(()=>{});
+      }catch(e){
+        log('TTS error: ' + e.message);
+      }
+    }
+
+    // Auto prompt logic runs every 8s
+    setInterval(()=>{
+      if (!auto) return;
+      const targetPace = parseMinSec(targetPaceInput.value || '5:00');
+      const paceDelta = (pace - targetPace);
+      const hrTarget = Number(targetHRInput.value || 150);
+
+      // If HR high
+      if (hr > hrTarget + 10){
+        const msg = chooseTemplate('slowDown', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, promptStyle.value);
+        speakText(msg);
+      } else if (paceDelta > 12) { // slower than target by >12s per km
+        const msg = chooseTemplate('push', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, promptStyle.value);
+        speakText(msg);
+      } else if (paceDelta < -12) { // faster than target by >12s (maybe push recovery)
+        const msg = chooseTemplate('status', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, promptStyle.value);
+        speakText(msg);
+      } else {
+        // occasional breath cue
+        if (Math.random() < 0.25) {
+          const msg = chooseTemplate('breath', {}, promptStyle.value);
+          speakText(msg);
+        }
+      }
+    }, 8000);
+
+    // Event handlers
+    paceSlider.addEventListener('input', ()=>{
+      pace = Number(paceSlider.value);
+      updateDisplays();
+    });
+    hrSlider.addEventListener('input', ()=>{
+      hr = Number(hrSlider.value);
+      updateDisplays();
+    });
+    addDistanceBtn.addEventListener('click', ()=>{
+      dist += 0.1; updateDisplays(); log('Distance increased to ' + dist.toFixed(2));
+    });
+
+    toggleAuto.addEventListener('click', ()=>{
+      auto = !auto;
+      toggleAuto.textContent = auto ? 'Disable' : 'Enable';
+      log('Auto prompts ' + (auto ? 'enabled' : 'disabled'));
+    });
+
+    speakBtn.addEventListener('click', ()=>{
+      const text = manualText.value || "Keep going!";
+      speakText(text);
+    });
+    sampleBreath.addEventListener('click', ()=>{
+      speakText(chooseTemplate('breath', {}, promptStyle.value));
+    });
+    samplePush.addEventListener('click', ()=>{
+      speakText(chooseTemplate('push', {}, promptStyle.value));
+    });
+
+    // init
+    updateDisplays();
+    loadVoices();
+    log('Dashboard ready');
+  </script>
+</body>
+</html>

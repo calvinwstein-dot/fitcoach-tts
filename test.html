@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FitCoach TTS Test</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    input, button { font-size: 1em; margin: 0.5em 0; }
+    audio { display: block; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Test FitCoach TTS</h1>
+  <label for="text">Text to speak:</label><br>
+  <input type="text" id="text" value="Hello FitCoach!" size="40"><br>
+  <button onclick="getTTS()">Speak</button>
+  <audio id="player" controls></audio>
+  <div id="status"></div>
+  <script>
+    async function getTTS() {
+      const text = document.getElementById('text').value;
+      const status = document.getElementById('status');
+      status.textContent = 'Requesting...';
+      try {
+        const res = await fetch(`/tts?text=${encodeURIComponent(text)}`);
+        if (!res.ok) throw new Error('TTS request failed');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        document.getElementById('player').src = url;
+        status.textContent = 'Success!';
+      } catch (e) {
+        status.textContent = 'Error: ' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>

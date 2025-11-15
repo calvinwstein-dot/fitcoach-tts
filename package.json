@@ -1,7 +1,7 @@
 {
-  "name": "nodejs",
+  "name": "fitcoach-tts",
   "version": "1.0.0",
-  "description": "",
+  "description": "FitCoach TTS server that proxies ElevenLabs text-to-speech API",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -9,7 +9,7 @@
     "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["tts","elevenlabs","fitcoach","audio","tts-server"],
   "author": "",
   "license": "ISC",
   "dependencies": {
