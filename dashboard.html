@@ -5,43 +5,100 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FitCoach Dashboard</title>
   <style>
-    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 20px; color: #111 }
-    .container { max-width: 980px; margin: 0 auto }
-    h1 { margin-bottom: 6px }
-    .row { display:flex; gap:16px; margin-bottom:12px; align-items:center }
-    .card { padding:14px; border:1px solid #eee; border-radius:8px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.03) }
-    .big { font-size:2rem; font-weight:700 }
-    label { font-weight:600 }
-    select,input[type=text],input[type=number] { padding:8px; border-radius:6px; border:1px solid #ddd }
-    button { padding:10px 14px; border-radius:6px; border:none; background:#0b6efd; color:white; cursor:pointer }
-    button.secondary { background:#666 }
-    .muted { color:#666 }
-    .controls { display:flex; gap:12px; flex-wrap:wrap }
-    .left { flex:1 }
-    .right { width:340px }
-    .log { height:160px; overflow:auto; background:#fafafa; padding:8px; border-radius:6px; border:1px solid #eee }
-    .row .card { flex:1 }
+    * { box-sizing: border-box; }
+    body { 
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
+      margin: 0; 
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+    .container { max-width: 1100px; margin: 0 auto }
+    h1 { margin-bottom: 6px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .subtitle { color: rgba(255,255,255,0.9); margin-bottom: 24px; }
+    .row { display:flex; gap:16px; margin-bottom:16px; align-items:stretch; flex-wrap: wrap; }
+    .card { 
+      padding: 20px; 
+      border-radius: 12px; 
+      background: rgba(255,255,255,0.95); 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      color: #333;
+    }
+    .big { font-size: 2.5rem; font-weight: 700; color: #667eea; }
+    label { font-weight: 600; color: #555; display: block; margin-bottom: 6px; }
+    select, input[type=text], input[type=number] { 
+      padding: 10px 12px; 
+      border-radius: 8px; 
+      border: 2px solid #e0e0e0; 
+      width: 100%;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    select:focus, input:focus { outline: none; border-color: #667eea; }
+    button { 
+      padding: 12px 20px; 
+      border-radius: 8px; 
+      border: none; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      color: white; 
+      cursor: pointer; 
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+    button:active { transform: translateY(0); }
+    button.secondary { 
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+      box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+    }
+    button.secondary:hover { box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4); }
+    .muted { color: #888; font-size: 13px; }
+    .controls { display:flex; gap:12px; flex-wrap:wrap; margin-top: 16px; }
+    .left { flex: 1; min-width: 300px; }
+    .right { flex: 1; min-width: 300px; }
+    .log { 
+      height: 180px; 
+      overflow: auto; 
+      background: #f8f9fa; 
+      padding: 12px; 
+      border-radius: 8px; 
+      border: 2px solid #e0e0e0;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+    }
+    .log div { margin-bottom: 4px; color: #555; }
+    .row .card { flex: 1; }
+    .telemetry-box { display: flex; gap: 24px; align-items: center; justify-content: space-around; margin-bottom: 16px; }
+    .telemetry-item { text-align: center; }
+    .telemetry-item .big { margin: 8px 0; }
+    @media (max-width: 768px) {
+      .row { flex-direction: column; }
+      .telemetry-box { flex-direction: column; gap: 16px; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>FitCoach — Live Dashboard</h1>
-    <p class="muted">Simulate or provide live telemetry; choose voice and enable auto voice prompts. Uses your local `/tts` endpoint.</p>
+    <h1>🏃 FitCoach — Live Dashboard</h1>
+    <p class="subtitle">Simulate or provide live telemetry; choose voice and enable auto voice prompts.</p>
 
     <div class="row">
       <div class="card left">
-        <div style="display:flex;gap:18px;align-items:center">
-          <div>
+        <div class="telemetry-box">
+          <div class="telemetry-item">
             <div class="muted">Pace</div>
             <div class="big" id="paceDisplay">5:00</div>
             <div class="muted">(min/km)</div>
           </div>
-          <div>
+          <div class="telemetry-item">
             <div class="muted">Heart Rate</div>
             <div class="big" id="hrDisplay">140</div>
             <div class="muted">bpm</div>
           </div>
-          <div>
+          <div class="telemetry-item">
             <div class="muted">Distance</div>
             <div class="big" id="distDisplay">0.00</div>
             <div class="muted">km</div>
