@@ -174,8 +174,13 @@
     async function loadVoices(){
       try{
         const r = await fetch('/voices');
+        if (!r.ok) {
+          log('Voices API error: ' + r.status);
+          return;
+        }
         const data = await r.json();
-        voices = data.voices || data || [];
+        // ElevenLabs returns {voices: [...]}
+        voices = Array.isArray(data) ? data : (data.voices || []);
         const male = [];
         const female = [];
         const unknown = [];
