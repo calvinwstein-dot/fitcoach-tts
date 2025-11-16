@@ -5,184 +5,381 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FitCoach Dashboard</title>
   <style>
+    /* ============================================
+       COLOR CONFIGURATION - CHANGE THESE VALUES
+       ============================================ */
+    :root {
+      /* Background Gradient */
+      --bg-gradient-start: #667eea;    /* Purple */
+      --bg-gradient-end: #764ba2;      /* Dark Purple */
+      
+      /* Primary Button (Start/Stop/Settings) */
+      --btn-primary-start: #667eea;    /* Purple */
+      --btn-primary-end: #764ba2;      /* Dark Purple */
+      
+      /* Secondary Button (Randomize/Test) */
+      --btn-secondary-start: #f093fb;  /* Pink */
+      --btn-secondary-end: #f5576c;    /* Red-Pink */
+      
+      /* Metric Value Color (Pace, HR, Distance, Time) */
+      --metric-color: #667eea;         /* Purple */
+      
+      /* Card Background */
+      --card-bg: rgba(255,255,255,0.95); /* White with transparency */
+      
+      /* Text Colors */
+      --text-primary: #333;            /* Dark gray */
+      --text-muted: #888;              /* Medium gray */
+      --text-white: #fff;              /* White */
+    }
+    
+    /* ============================================
+       GENERAL STYLES
+       ============================================ */
     * { box-sizing: border-box; }
     body { 
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
       margin: 0; 
       padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
       min-height: 100vh;
-      color: #fff;
+      color: var(--text-white);
     }
-    .container { max-width: 1100px; margin: 0 auto }
-    h1 { margin-bottom: 6px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    .subtitle { color: rgba(255,255,255,0.9); margin-bottom: 24px; }
-    .row { display:flex; gap:16px; margin-bottom:16px; align-items:stretch; flex-wrap: wrap; }
-    .card { 
-      padding: 20px; 
-      border-radius: 12px; 
-      background: rgba(255,255,255,0.95); 
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0; color: var(--text-white); text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    
+    /* Main Metrics Card */
+    .metrics-card { 
+      padding: 32px; 
+      border-radius: 16px; 
+      background: var(--card-bg); 
       box-shadow: 0 8px 32px rgba(0,0,0,0.1);
       backdrop-filter: blur(10px);
-      color: #333;
+      color: var(--text-primary);
+      margin-bottom: 20px;
     }
-    .big { font-size: 2.5rem; font-weight: 700; color: #667eea; }
-    label { font-weight: 600; color: #555; display: block; margin-bottom: 6px; }
-    select, input[type=text], input[type=number] { 
-      padding: 10px 12px; 
-      border-radius: 8px; 
-      border: 2px solid #e0e0e0; 
-      width: 100%;
-      font-size: 14px;
-      transition: border-color 0.2s;
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 32px;
+      text-align: center;
     }
-    select:focus, input:focus { outline: none; border-color: #667eea; }
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .metric-label { 
+      font-size: 14px; 
+      color: var(--text-muted); 
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .metric-value { 
+      font-size: 3rem; 
+      font-weight: 700; 
+      color: var(--metric-color);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .metric-unit { 
+      font-size: 13px; 
+      color: var(--text-muted);
+    }
+    
+    /* Control Buttons */
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
     button { 
-      padding: 12px 20px; 
-      border-radius: 8px; 
+      padding: 14px 28px; 
+      border-radius: 10px; 
       border: none; 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      background: linear-gradient(135deg, var(--btn-primary-start) 0%, var(--btn-primary-end) 100%); 
       color: white; 
       cursor: pointer; 
       font-weight: 600;
+      font-size: 15px;
       transition: transform 0.2s, box-shadow 0.2s;
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
     button:active { transform: translateY(0); }
     button.secondary { 
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+      background: linear-gradient(135deg, var(--btn-secondary-start) 0%, var(--btn-secondary-end) 100%); 
       box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
     }
     button.secondary:hover { box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4); }
-    .muted { color: #888; font-size: 13px; }
-    .controls { display:flex; gap:12px; flex-wrap:wrap; margin-top: 16px; }
-    .left { flex: 1; min-width: 300px; }
-    .right { flex: 1; min-width: 300px; }
+    button.settings {
+      padding: 10px 20px;
+      font-size: 24px;
+      background: rgba(255,255,255,0.2);
+      box-shadow: none;
+    }
+    button.settings:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.05);
+    }
+    
+    /* Settings Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      color: var(--text-primary);
+      box-shadow: 0 16px 64px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .modal-header h2 {
+      margin: 0;
+      color: var(--text-primary);
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      box-shadow: none;
+    }
+    .close-btn:hover {
+      color: var(--text-primary);
+      transform: none;
+    }
+    .setting-group {
+      margin-bottom: 20px;
+    }
+    .setting-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .setting-group select,
+    .setting-group input[type="text"],
+    .setting-group input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid #e0e0e0;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .setting-group input[type="range"] {
+      width: 100%;
+    }
+    .setting-group select:focus,
+    .setting-group input:focus {
+      outline: none;
+      border-color: var(--metric-color);
+    }
+    .range-value {
+      text-align: center;
+      font-weight: 600;
+      color: var(--metric-color);
+      margin-top: 4px;
+    }
+    
+    /* Event Log */
+    .log-card {
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--card-bg);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      color: var(--text-primary);
+    }
+    .log-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: var(--text-primary);
+    }
     .log { 
-      height: 180px; 
+      height: 150px; 
       overflow: auto; 
       background: #f8f9fa; 
       padding: 12px; 
       border-radius: 8px; 
       border: 2px solid #e0e0e0;
-      font-size: 13px;
+      font-size: 12px;
       font-family: 'Courier New', monospace;
     }
-    .log div { margin-bottom: 4px; color: #555; }
-    .row .card { flex: 1; }
-    .telemetry-box { display: flex; gap: 24px; align-items: center; justify-content: space-around; margin-bottom: 16px; }
-    .telemetry-item { text-align: center; }
-    .telemetry-item .big { margin: 8px 0; }
+    .log div { 
+      margin-bottom: 4px; 
+      color: var(--text-muted);
+    }
+    
     @media (max-width: 768px) {
-      .row { flex-direction: column; }
-      .telemetry-box { flex-direction: column; gap: 16px; }
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      .metric-value { font-size: 2.5rem; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🏃 FitCoach — Live Dashboard</h1>
-    <p class="subtitle">Simulate or provide live telemetry; choose voice and enable auto voice prompts.</p>
+    <div class="header">
+      <h1>🏃 FitCoach</h1>
+      <button class="settings" onclick="openSettings()">⚙️</button>
+    </div>
 
-    <div class="row">
-      <div class="card left">
-        <div class="telemetry-box">
-          <div class="telemetry-item">
-            <div class="muted">Pace</div>
-            <div class="big" id="paceDisplay">5:00</div>
-            <div class="muted">(min/km)</div>
-          </div>
-          <div class="telemetry-item">
-            <div class="muted">Heart Rate</div>
-            <div class="big" id="hrDisplay">140</div>
-            <div class="muted">bpm</div>
-          </div>
-          <div class="telemetry-item">
-            <div class="muted">Distance</div>
-            <div class="big" id="distDisplay">0.00</div>
-            <div class="muted">km</div>
-          </div>
+    <!-- Main Metrics Display -->
+    <div class="metrics-card">
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <div class="metric-label">Avg Pace</div>
+          <div class="metric-value" id="paceDisplay">5:00</div>
+          <div class="metric-unit" id="paceUnit">min/km</div>
         </div>
-
-        <div style="margin-top:12px" class="controls">
-          <div>
-            <label>Target Pace (min/km)</label><br>
-            <input id="targetPace" type="text" value="5:00" />
-          </div>
-          <div>
-            <label>HR Zone Target (bpm)</label><br>
-            <input id="targetHR" type="number" value="150" />
-          </div>
-          <div>
-            <label>Auto Prompts</label><br>
-            <button id="toggleAuto">Enable</button>
-          </div>
+        <div class="metric-item">
+          <div class="metric-label">Heart Rate</div>
+          <div class="metric-value" id="hrDisplay">140</div>
+          <div class="metric-unit">bpm</div>
         </div>
-
-        <hr />
-        <div style="display:flex;gap:12px;align-items:center">
-          <div>
-            <label>Adjust Pace</label><br>
-            <input id="paceSlider" type="range" min="300" max="900" value="300" />
-            <div class="muted">Use slider to change pace (seconds per km). Lower = faster.</div>
-          </div>
-          <div>
-            <label>Adjust HR</label><br>
-            <input id="hrSlider" type="range" min="60" max="200" value="140" />
-          </div>
-          <div>
-            <label>Distance +</label><br>
-            <button id="addDistance">+0.1 km</button>
-          </div>
+        <div class="metric-item">
+          <div class="metric-label">Distance</div>
+          <div class="metric-value" id="distDisplay">0.00</div>
+          <div class="metric-unit" id="distUnit">km</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Time</div>
+          <div class="metric-value" id="timeDisplay">0:00</div>
+          <div class="metric-unit">min:sec</div>
         </div>
       </div>
-
-      <div class="card right">
-        <div>
-          <label>Voice</label><br>
-          <select id="voices"></select>
-        </div>
-
-        <div style="margin-top:10px">
-          <label>Realism / Expressiveness</label><br>
-          <input id="realism" type="range" min="0" max="1" step="0.1" value="0.6" />
-        </div>
-
-        <div style="margin-top:10px">
-          <label>Prompt Style</label><br>
-          <select id="promptStyle" style="width:100%">
-            <option value="motivational">Motivational</option>
-            <option value="calm">Calm</option>
-            <option value="technical">Technical</option>
-          </select>
-        </div>
-
-        <div style="margin-top:10px">
-          <label>Manual Prompt</label><br>
-          <input id="manualText" type="text" placeholder="Type a message" style="width:100%" />
-          <div style="margin-top:8px;display:flex;gap:8px">
-            <button id="speakBtn">Speak</button>
-            <button class="secondary" id="sampleBreath">Breathing</button>
-            <button class="secondary" id="samplePush">Push</button>
-          </div>
-        </div>
-
-        <hr />
-        <div>
-          <label>Event Log</label>
-          <div class="log" id="log"></div>
-        </div>
+      
+      <div class="controls">
+        <button id="startBtn" onclick="toggleRun()">▶️ Start</button>
+        <button class="secondary" onclick="randomizeTelemetry()">🎲 Randomize</button>
+        <button class="secondary" onclick="testVoice()">🔊 Test Voice</button>
       </div>
     </div>
 
-    <p class="muted">Notes: pace units are min/km. You can adjust sliders to simulate a run. Auto prompts will react to pace/HR relative to targets and use the selected voice to play TTS audio.</p>
+    <!-- Event Log -->
+    <div class="log-card">
+      <h3>Event Log</h3>
+      <div class="log" id="log"></div>
+    </div>
   </div>
 
-  <audio id="player" controls style="display:none"></audio>
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="close-btn" onclick="closeSettings()">×</button>
+      </div>
+
+      <div class="setting-group">
+        <label>Voice</label>
+        <select id="voiceSelect"></select>
+      </div>
+
+      <div class="setting-group">
+        <label>Realism / Expressiveness</label>
+        <input type="range" id="realism" min="0" max="1" step="0.1" value="0.6" oninput="updateRangeDisplay('realism', this.value)">
+        <div class="range-value" id="realismValue">0.6</div>
+      </div>
+
+      <div class="setting-group">
+        <label>Prompt Style</label>
+        <select id="promptStyle">
+          <option value="motivational">Motivational</option>
+          <option value="calm">Calm</option>
+          <option value="technical">Technical</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label>Distance Unit</label>
+        <select id="unitSelect" onchange="updateUnits()">
+          <option value="km">Kilometers</option>
+          <option value="miles">Miles</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label>Target Pace</label>
+        <input type="text" id="targetPace" value="5:00" placeholder="5:00">
+      </div>
+
+      <div class="setting-group">
+        <label>Target Heart Rate (bpm)</label>
+        <input type="number" id="targetHR" value="150" min="60" max="200">
+      </div>
+
+      <div class="setting-group">
+        <label>Auto Prompts</label>
+        <button id="toggleAutoBtn" onclick="toggleAuto()">Enable</button>
+      </div>
+
+      <div class="setting-group">
+        <label>Manual Prompt</label>
+        <input type="text" id="manualText" placeholder="Type a custom message">
+        <button onclick="speakManual()" style="margin-top: 8px; width: 100%;">Speak</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="player" style="display:none"></audio>
 
   <script>
-    // Helpers
+    // ============================================
+    // STATE & CONFIGURATION
+    // ============================================
+    let pace = 300; // seconds per km (5:00)
+    let hr = 140;
+    let dist = 0.0;
+    let time = 0; // seconds
+    let auto = false;
+    let running = false;
+    let voices = [];
+    let unit = 'km'; // 'km' or 'miles'
+    let runInterval = null;
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
     const secToMinSec = s => {
       const m = Math.floor(s/60);
       const sec = Math.round(s%60).toString().padStart(2,'0');
@@ -195,39 +392,17 @@
       return Number(str);
     }
 
-    // Elements
-    const paceSlider = document.getElementById('paceSlider');
-    const hrSlider = document.getElementById('hrSlider');
-    const paceDisplay = document.getElementById('paceDisplay');
-    const hrDisplay = document.getElementById('hrDisplay');
-    const distDisplay = document.getElementById('distDisplay');
-    const addDistanceBtn = document.getElementById('addDistance');
-    const toggleAuto = document.getElementById('toggleAuto');
-    const voicesSelect = document.getElementById('voices');
-    const player = document.getElementById('player');
-    const realism = document.getElementById('realism');
-    const promptStyle = document.getElementById('promptStyle');
-    const manualText = document.getElementById('manualText');
-    const speakBtn = document.getElementById('speakBtn');
-    const sampleBreath = document.getElementById('sampleBreath');
-    const samplePush = document.getElementById('samplePush');
-    const logEl = document.getElementById('log');
-    const targetPaceInput = document.getElementById('targetPace');
-    const targetHRInput = document.getElementById('targetHR');
-
-    // State
-    let pace = 300; // seconds per km (5:00)
-    let hr = 140;
-    let dist = 0.0;
-    let auto = false;
-    let voices = [];
+    const kmToMiles = km => km * 0.621371;
+    const milesToKm = miles => miles / 0.621371;
 
     function log(msg){
-      const time = new Date().toLocaleTimeString();
-      logEl.innerHTML = `<div>[${time}] ${msg}</div>` + logEl.innerHTML;
+      const t = new Date().toLocaleTimeString();
+      document.getElementById('log').innerHTML = `<div>[${t}] ${msg}</div>` + document.getElementById('log').innerHTML;
     }
 
-    // Populate voices: limit to 3 male and 3 female (infer gender if necessary)
+    // ============================================
+    // VOICE LOADING
+    // ============================================
     async function loadVoices(){
       try{
         const r = await fetch('/voices');
@@ -236,25 +411,21 @@
           return;
         }
         const data = await r.json();
-        // ElevenLabs returns {voices: [...]}
         voices = Array.isArray(data) ? data : (data.voices || []);
+        
         const male = [];
         const female = [];
-        const unknown = [];
-
-        // common name heuristics to infer gender when API doesn't provide it
-        const maleNames = ['roger','clyde','john','david','michael','james','robert','chris','daniel','tom','alex'];
-        const femaleNames = ['sarah','emma','olivia','ava','sophia','mia','isabella','emily','anna','kate','lisa'];
+        const maleNames = ['roger','clyde','john','david','michael','james','robert','chris','daniel','tom','alex','brian','bill'];
+        const femaleNames = ['sarah','emma','olivia','ava','sophia','mia','isabella','emily','anna','kate','lisa','lily','rachel'];
 
         voices.forEach(v=>{
-          const id = v.voice_id || v.id || v.voiceId || v.id;
+          const id = v.voice_id || v.id || v.voiceId;
           const name = (v.name || v.voice_name || id || '').toString();
-          const genderRaw = (v.gender || (v.metadata && v.metadata.gender) || '').toString().toLowerCase();
+          const genderRaw = (v.gender || (v.labels && v.labels.gender) || '').toString().toLowerCase();
           let g = null;
-          if (genderRaw) {
-            if (genderRaw.includes('male')) g = 'male';
-            else if (genderRaw.includes('female')) g = 'female';
-          }
+          if (genderRaw.includes('male') && !genderRaw.includes('female')) g = 'male';
+          else if (genderRaw.includes('female')) g = 'female';
+          
           if (!g) {
             const first = name.split(' ')[0].toLowerCase();
             if (maleNames.includes(first)) g = 'male';
@@ -264,142 +435,39 @@
           const obj = { id, name };
           if (g === 'male') male.push(obj);
           else if (g === 'female') female.push(obj);
-          else unknown.push(obj);
         });
 
-        // Fill up to 3 each, using unknown as fallback
-        const take = (arr, n) => arr.slice(0,n);
-        let males = take(male,3);
-        let females = take(female,3);
-        if (males.length < 3) {
-          const needed = 3 - males.length;
-          males = males.concat(take(unknown.splice(0, needed), needed));
-        }
-        if (females.length < 3) {
-          const needed = 3 - females.length;
-          females = females.concat(take(unknown.splice(0, needed), needed));
-        }
-
-        voicesSelect.innerHTML = '';
-        const addOpt = (optgroupLabel, list)=>{
-          if (list.length===0) return;
+        const select = document.getElementById('voiceSelect');
+        select.innerHTML = '';
+        
+        const addGroup = (label, list) => {
+          if (list.length === 0) return;
           const group = document.createElement('optgroup');
-          group.label = optgroupLabel;
-          list.forEach(v=>{
+          group.label = label;
+          list.slice(0, 3).forEach(v => {
             const opt = document.createElement('option');
             opt.value = v.id;
             opt.textContent = v.name;
             group.appendChild(opt);
           });
-          voicesSelect.appendChild(group);
+          select.appendChild(group);
         }
 
-        addOpt('Female', females);
-        addOpt('Male', males);
+        addGroup('Female', female);
+        addGroup('Male', male);
 
-        // If still empty, fall back to listing all voices
-        if (voicesSelect.options.length === 0){
-          voices.forEach(v=>{
-            const opt = document.createElement('option');
-            opt.value = v.voice_id || v.id || v.voiceId || v.id;
-            opt.textContent = v.name || v.voice_name || v.id;
-            voicesSelect.appendChild(opt);
-          });
-        }
-
-        log('Loaded voices (female: ' + females.length + ', male: ' + males.length + ')');
+        log(`Loaded ${female.length} female and ${male.length} male voices`);
       }catch(e){
         log('Could not load voices: ' + e.message);
       }
     }
 
-    // Update displays
-    function updateDisplays(){
-      paceDisplay.textContent = secToMinSec(pace);
-      hrDisplay.textContent = hr;
-      distDisplay.textContent = dist.toFixed(2);
-      paceSlider.value = pace;
-      hrSlider.value = hr;
-    }
-
-    // Generate realistic messages organized by prompt style
-    const templates = {
-      motivational: {
-        push: [
-          "Yes — push now for 30 seconds. Keep your form and give me everything.",
-          "Nice rhythm. Accelerate — quick feet, strong arms, breathe with purpose.",
-          "One hard minute. Dig deep — you can own this."
-        ],
-        slowDown: [
-          "Easy now — breathe deep and settle into a steady rhythm.",
-          "Take two deep breaths and recover. Focus on long, calm steps.",
-          "Relax your shoulders, find your pace, and conserve energy." 
-        ],
-        status: [
-          "Status: pace {pace}, heart rate {hr} bpm, distance {dist} km. Keep it steady.",
-          "You've reached {dist} km. Pace {pace}, HR {hr}. Stay focused and controlled." 
-        ],
-        breath: [
-          "Breathe in for three, out for four. Match your steps to the breath.",
-          "Slow breath — in two, three; out two, three, four. Find the rhythm.",
-          "Inhale... exhale... steady now. Keep that control." 
-        ]
-      },
-      calm: {
-        push: [
-          "Increase gently for a short while; keep your breathing even.",
-          "Nudge the pace up — soft and controlled. Maintain relaxed shoulders.",
-          "A gentle push now. Stay light on your feet and breathe calmly."
-        ],
-        slowDown: [
-          "Ease off gradually and breathe through your nose when you can.",
-          "Slow down a touch; let your heart rate settle and your shoulders drop.",
-          "Take long, smooth breaths and reduce effort to recover." 
-        ],
-        status: [
-          "Current pace {pace}, heart rate {hr} bpm, distance {dist} kilometers.",
-          "At {dist} km — maintain a calm, steady pace of {pace}." 
-        ],
-        breath: [
-          "Breathe in gently for three, out for four. Keep the exhale longer.",
-          "Gentle rhythm: in two, three; out two, three, four. Relax.",
-          "Slow inhale... long exhale... match the calm of your steps." 
-        ]
-      },
-      technical: {
-        push: [
-          "Increase cadence by five steps per minute and maintain turnover.",
-          "Shorten ground contact and increase turnover for the next interval.",
-          "Pick up the cadence — focus on quick, light steps for sixty seconds."
-        ],
-        slowDown: [
-          "Reduce pace by 10% and extend your stride slightly to lower intensity.",
-          "Drop your cadence and lengthen the recovery phase between intervals.",
-          "Shift to relaxed form: lower cadence, longer stride, easy breathing." 
-        ],
-        status: [
-          "Telemetry: pace {pace}, HR {hr} bpm, distance {dist} km. Maintain target zone.",
-          "Segment complete: {dist} km, pace {pace}, heart rate {hr}. Adjust as needed." 
-        ],
-        breath: [
-          "Use a 3:4 breathing pattern — inhale 3, exhale 4 — and sync with steps.",
-          "Control breathing: two quick inhales, one long exhale. Keep it even.",
-          "Breathe through diaphragmatic pattern: in three, out four. Match cadence." 
-        ]
-      }
-    }
-
-    function chooseTemplate(kind, vars={}, style='motivational'){
-      const styleSet = templates[style] || templates['motivational'];
-      const arr = (styleSet && styleSet[kind]) ? styleSet[kind] : [kind];
-      const t = arr[Math.floor(Math.random()*arr.length)];
-      return t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
-    }
-
-    // Ask backend to synthesize and play TTS
+    // ============================================
+    // TTS FUNCTION
+    // ============================================
     async function speakText(text){
-      const voice = voicesSelect.value || '';
-      const style = Number(realism.value) || 0.6;
+      const voice = document.getElementById('voiceSelect').value || '';
+      const style = Number(document.getElementById('realism').value) || 0.6;
       const stability = 0.4 + (style * 0.5);
       const similarity = 0.7 + (style * 0.3);
       log('Speaking: ' + text);
@@ -409,71 +477,200 @@
         if (!r.ok) throw new Error('TTS failed: ' + r.status);
         const blob = await r.blob();
         const src = URL.createObjectURL(blob);
+        const player = document.getElementById('player');
         player.src = src;
-        player.style.display = 'block';
         player.play().catch(()=>{});
       }catch(e){
         log('TTS error: ' + e.message);
       }
     }
 
-    // Auto prompt logic runs every 8s
-    setInterval(()=>{
-      if (!auto) return;
-      const targetPace = parseMinSec(targetPaceInput.value || '5:00');
-      const paceDelta = (pace - targetPace);
-      const hrTarget = Number(targetHRInput.value || 150);
+    // ============================================
+    // PROMPT TEMPLATES
+    // ============================================
+    const templates = {
+      motivational: {
+        push: [
+          "Push now for 30 seconds. Keep your form and give me everything.",
+          "Accelerate — quick feet, strong arms, breathe with purpose.",
+          "One hard minute. Dig deep — you can own this."
+        ],
+        slowDown: [
+          "Easy now — breathe deep and settle into a steady rhythm.",
+          "Take two deep breaths and recover.",
+          "Relax your shoulders and conserve energy." 
+        ],
+        status: [
+          "Pace {pace}, heart rate {hr}, distance {dist}. Keep it steady.",
+          "You've reached {dist}. Stay focused and controlled." 
+        ]
+      },
+      calm: {
+        push: [
+          "Increase gently for a short while.",
+          "Nudge the pace up — soft and controlled.",
+          "A gentle push now. Stay light on your feet."
+        ],
+        slowDown: [
+          "Ease off gradually and breathe through your nose.",
+          "Slow down a touch and let your heart rate settle.",
+          "Take long, smooth breaths and reduce effort." 
+        ],
+        status: [
+          "Current pace {pace}, heart rate {hr}, distance {dist}.",
+          "At {dist} — maintain a calm, steady pace." 
+        ]
+      },
+      technical: {
+        push: [
+          "Increase cadence by five steps per minute.",
+          "Shorten ground contact and increase turnover.",
+          "Pick up the cadence for sixty seconds."
+        ],
+        slowDown: [
+          "Reduce pace by 10 percent.",
+          "Drop your cadence and lengthen recovery.",
+          "Lower cadence, longer stride, easy breathing." 
+        ],
+        status: [
+          "Telemetry: pace {pace}, heart rate {hr}, distance {dist}.",
+          "Segment complete. Adjust as needed." 
+        ]
+      }
+    }
 
-      // If HR high
-      if (hr > hrTarget + 10){
-        const msg = chooseTemplate('slowDown', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, promptStyle.value);
-        speakText(msg);
-      } else if (paceDelta > 12) { // slower than target by >12s per km
-        const msg = chooseTemplate('push', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, promptStyle.value);
-        speakText(msg);
-      } else if (paceDelta < -12) { // faster than target by >12s (maybe push recovery)
-        const msg = chooseTemplate('status', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, promptStyle.value);
-        speakText(msg);
+    function chooseTemplate(kind, vars={}, style='motivational'){
+      const styleSet = templates[style] || templates['motivational'];
+      const arr = styleSet[kind] || [kind];
+      const t = arr[Math.floor(Math.random()*arr.length)];
+      return t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
+    }
+
+    // ============================================
+    // DISPLAY UPDATES
+    // ============================================
+    function updateDisplays(){
+      const displayDist = unit === 'miles' ? kmToMiles(dist) : dist;
+      const displayUnit = unit === 'miles' ? 'min/mi' : 'min/km';
+      
+      document.getElementById('paceDisplay').textContent = secToMinSec(pace);
+      document.getElementById('hrDisplay').textContent = hr;
+      document.getElementById('distDisplay').textContent = displayDist.toFixed(2);
+      document.getElementById('timeDisplay').textContent = secToMinSec(time);
+      document.getElementById('paceUnit').textContent = displayUnit;
+      document.getElementById('distUnit').textContent = unit;
+    }
+
+    function updateUnits(){
+      unit = document.getElementById('unitSelect').value;
+      updateDisplays();
+      log('Units changed to ' + unit);
+    }
+
+    function updateRangeDisplay(id, value){
+      document.getElementById(id + 'Value').textContent = value;
+    }
+
+    // ============================================
+    // MODAL CONTROLS
+    // ============================================
+    function openSettings(){
+      document.getElementById('settingsModal').classList.add('show');
+    }
+
+    function closeSettings(){
+      document.getElementById('settingsModal').classList.remove('show');
+    }
+
+    // ============================================
+    // RUN CONTROLS
+    // ============================================
+    function toggleRun(){
+      running = !running;
+      const btn = document.getElementById('startBtn');
+      if (running) {
+        btn.textContent = '⏸️ Pause';
+        btn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+        startRun();
+        log('Run started');
       } else {
-        // occasional breath cue
-        if (Math.random() < 0.25) {
-          const msg = chooseTemplate('breath', {}, promptStyle.value);
-          speakText(msg);
-        }
+        btn.textContent = '▶️ Start';
+        btn.style.background = 'linear-gradient(135deg, var(--btn-primary-start) 0%, var(--btn-primary-end) 100%)';
+        stopRun();
+        log('Run paused');
+      }
+    }
+
+    function startRun(){
+      if (runInterval) clearInterval(runInterval);
+      runInterval = setInterval(() => {
+        time += 1;
+        // Simulate distance increase based on pace (roughly)
+        dist += (1 / pace) / 60; // km per second
+        // Vary HR slightly
+        hr = Math.max(60, Math.min(200, hr + (Math.random() - 0.5) * 3));
+        updateDisplays();
+      }, 1000);
+    }
+
+    function stopRun(){
+      if (runInterval) {
+        clearInterval(runInterval);
+        runInterval = null;
+      }
+    }
+
+    function randomizeTelemetry(){
+      pace = Math.floor(Math.random() * 300) + 240; // 4:00-9:00
+      hr = Math.floor(Math.random() * 80) + 120; // 120-200
+      dist = Math.random() * 10; // 0-10km
+      updateDisplays();
+      log('Telemetry randomized');
+    }
+
+    function testVoice(){
+      const style = document.getElementById('promptStyle').value;
+      const msg = chooseTemplate('status', {
+        pace: secToMinSec(pace), 
+        hr, 
+        dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2) + ' ' + unit
+      }, style);
+      speakText(msg);
+    }
+
+    function speakManual(){
+      const text = document.getElementById('manualText').value || "Keep going!";
+      speakText(text);
+    }
+
+    function toggleAuto(){
+      auto = !auto;
+      document.getElementById('toggleAutoBtn').textContent = auto ? 'Disable' : 'Enable';
+      log('Auto prompts ' + (auto ? 'enabled' : 'disabled'));
+    }
+
+    // ============================================
+    // AUTO PROMPTS
+    // ============================================
+    setInterval(()=>{
+      if (!auto || !running) return;
+      const targetPace = parseMinSec(document.getElementById('targetPace').value || '5:00');
+      const paceDelta = pace - targetPace;
+      const hrTarget = Number(document.getElementById('targetHR').value || 150);
+      const style = document.getElementById('promptStyle').value;
+
+      if (hr > hrTarget + 10){
+        const msg = chooseTemplate('slowDown', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
+        speakText(msg);
+      } else if (paceDelta > 12) {
+        const msg = chooseTemplate('push', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
+        speakText(msg);
       }
     }, 8000);
 
-    // Event handlers
-    paceSlider.addEventListener('input', ()=>{
-      pace = Number(paceSlider.value);
-      updateDisplays();
-    });
-    hrSlider.addEventListener('input', ()=>{
-      hr = Number(hrSlider.value);
-      updateDisplays();
-    });
-    addDistanceBtn.addEventListener('click', ()=>{
-      dist += 0.1; updateDisplays(); log('Distance increased to ' + dist.toFixed(2));
-    });
-
-    toggleAuto.addEventListener('click', ()=>{
-      auto = !auto;
-      toggleAuto.textContent = auto ? 'Disable' : 'Enable';
-      log('Auto prompts ' + (auto ? 'enabled' : 'disabled'));
-    });
-
-    speakBtn.addEventListener('click', ()=>{
-      const text = manualText.value || "Keep going!";
-      speakText(text);
-    });
-    sampleBreath.addEventListener('click', ()=>{
-      speakText(chooseTemplate('breath', {}, promptStyle.value));
-    });
-    samplePush.addEventListener('click', ()=>{
-      speakText(chooseTemplate('push', {}, promptStyle.value));
-    });
-
-    // init
+    // ============================================
+    // INITIALIZATION
+    // ============================================
     updateDisplays();
     loadVoices();
     log('Dashboard ready');
