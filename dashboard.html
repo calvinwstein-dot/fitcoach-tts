@@ -582,7 +582,7 @@
       const displayUnit = unit === 'miles' ? 'min/mi' : 'min/km';
       
       document.getElementById('paceDisplay').textContent = secToMinSec(pace);
-      document.getElementById('hrDisplay').textContent = String(Math.round(hr));
+      document.getElementById('hrDisplay').textContent = Math.round(hr);
       document.getElementById('distDisplay').textContent = displayDist.toFixed(2);
       document.getElementById('timeDisplay').textContent = secToMinSec(time);
       document.getElementById('paceUnit').textContent = displayUnit;
@@ -645,17 +645,10 @@
     }
 
     function startRun(){
-      // Create interval (already stopped in toggleRun)
-      
       runInterval = setInterval(() => {
-        time = Number(time) + 1;
-        // Simulate distance increase based on pace (roughly)
-        dist = Number(dist) + (1 / pace) / 60; // km per second
-        // Vary HR slightly (small random change between -1.5 and +1.5)
-        const hrChange = (Math.random() - 0.5) * 3;
-        hr = Number(hr);
-        hr = Math.round(Math.max(60, Math.min(200, hr + hrChange)));
-        console.log(`HR Update: ${hr} (type: ${typeof hr})`);
+        time++;
+        dist += (1 / pace) / 60;
+        hr = Math.round(Math.max(60, Math.min(200, hr + (Math.random() - 0.5) * 3)));
         updateDisplays();
       }, 1000);
     }
