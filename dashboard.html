@@ -344,12 +344,6 @@
       </div>
 
       <div class="setting-group">
-        <label>Realism / Expressiveness</label>
-        <input type="range" id="realism" min="0" max="1" step="0.1" value="0.6" oninput="updateRangeDisplay('realism', this.value)">
-        <div class="range-value" id="realismValue">0.6</div>
-      </div>
-
-      <div class="setting-group">
         <label>Prompt Style</label>
         <select id="promptStyle">
           <option value="motivational">Motivational</option>
@@ -495,9 +489,10 @@
     // ============================================
     async function speakText(text){
       const voice = document.getElementById('voiceSelect').value || '';
-      const style = Number(document.getElementById('realism').value) || 0.6;
-      const stability = 0.4 + (style * 0.5);
-      const similarity = 0.7 + (style * 0.3);
+      // Maximum expressiveness for motivational coaching
+      const style = 1.0;
+      const stability = 0.3;  // Lower stability = more emotion
+      const similarity = 1.0;  // Maximum similarity boost
       log('Speaking: ' + text);
       try{
         const url = `/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}&style=${encodeURIComponent(style)}&stability=${encodeURIComponent(stability)}&similarity=${encodeURIComponent(similarity)}`;
@@ -506,6 +501,7 @@
         const blob = await r.blob();
         const src = URL.createObjectURL(blob);
         const player = document.getElementById('player');
+        player.playbackRate = 0.85;  // Slightly slower for clarity
         player.src = src;
         player.play().catch(()=>{});
       }catch(e){
@@ -519,50 +515,53 @@
     const templates = {
       motivational: {
         push: [
-          "Push now for 30 seconds. Keep your form and give me everything.",
-          "Accelerate — quick feet, strong arms, breathe with purpose.",
-          "One hard minute. Dig deep — you can own this."
+          "LET'S GO! Push NOW for thirty seconds! Quick feet, strong arms, you've GOT this!",
+          "YES! Accelerate RIGHT NOW! Feel that power! This is YOUR moment!",
+          "DIG DEEP! Give me everything you've got! Thirty seconds of PURE EFFORT! Let's GO!",
+          "COME ON! Pick it up! Show me what you're made of! POWERFUL strides! You're UNSTOPPABLE!"
         ],
         slowDown: [
-          "Easy now — breathe deep and settle into a steady rhythm.",
-          "Take two deep breaths and recover.",
-          "Relax your shoulders and conserve energy." 
+          "Okay, BREATHE! Nice and easy now. Deep breaths. You're doing AMAZING! Settle into your rhythm.",
+          "Easy does it! Bring it down. Two big deep breaths for me. Feel that recovery. Beautiful!",
+          "Relax those shoulders! Shake it out! You're in CONTROL! Conserve that energy, you're doing GREAT!",
+          "Perfect! Ease off now. Let your heart rate come down. You've EARNED this recovery!"
         ],
         status: [
-          "Pace {pace}, heart rate {hr}, distance {dist}. Keep it steady.",
-          "You've reached {dist}. Stay focused and controlled." 
+          "You're at {dist}! Pace is {pace}, heart rate {hr}. You're looking STRONG out there! Keep it up!",
+          "CRUSHING it at {dist}! Heart rate {hr}, pace {pace}. Stay focused! You're doing INCREDIBLE!",
+          "WOW! {dist} down! Pace {pace}, heart rate {hr}. This is YOUR run! Keep that energy HIGH!"
         ]
       },
       calm: {
         push: [
-          "Increase gently for a short while.",
-          "Nudge the pace up — soft and controlled.",
-          "A gentle push now. Stay light on your feet."
+          "Okay, let's gently increase the pace now. Nice and smooth. You're doing beautifully.",
+          "Nudge it up just a little. Stay controlled and relaxed. Perfect form.",
+          "A gentle push now. Light feet, easy breathing. You've got this under control."
         ],
         slowDown: [
-          "Ease off gradually and breathe through your nose.",
-          "Slow down a touch and let your heart rate settle.",
-          "Take long, smooth breaths and reduce effort." 
+          "Ease off gradually now. Breathe through your nose. Long, smooth breaths.",
+          "Slow down just a touch. Let your heart rate settle. You're doing wonderfully.",
+          "Take it easy now. Reduce your effort. Beautiful, controlled running."
         ],
         status: [
-          "Current pace {pace}, heart rate {hr}, distance {dist}.",
-          "At {dist} — maintain a calm, steady pace." 
+          "Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this steady rhythm.",
+          "At {dist} now. Keep this calm, controlled pace. You're doing great."
         ]
       },
       technical: {
         push: [
-          "Increase cadence by five steps per minute.",
-          "Shorten ground contact and increase turnover.",
-          "Pick up the cadence for sixty seconds."
+          "Increase cadence by five steps per minute. Quick turnover. Let's see that efficiency!",
+          "Shorten ground contact! Increase your turnover! Power through!",
+          "Pick up the cadence for sixty seconds! Quick feet! Strong form!"
         ],
         slowDown: [
-          "Reduce pace by 10 percent.",
-          "Drop your cadence and lengthen recovery.",
-          "Lower cadence, longer stride, easy breathing." 
+          "Reduce pace by ten percent. Drop your effort. Lengthen recovery.",
+          "Lower your cadence now. Longer stride. Easy, controlled breathing.",
+          "Back it off. Reduce cadence. Focus on form and recovery."
         ],
         status: [
-          "Telemetry: pace {pace}, heart rate {hr}, distance {dist}.",
-          "Segment complete. Adjust as needed." 
+          "Telemetry check: pace {pace}, heart rate {hr}, distance {dist}. Systems nominal.",
+          "Segment complete at {dist}. Pace {pace}, heart rate {hr}. Adjust as needed."
         ]
       }
     }
