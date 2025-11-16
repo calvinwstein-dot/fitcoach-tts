@@ -35,6 +35,7 @@ app.use(cors()); // allow all origins
 app.use(express.static('.')); // serve static files
 
 app.get("/", (_req, res) => res.send("TTS server is running!"));
+app.get("/health", (_req, res) => res.status(200).send("OK"));
 
 // Get available voices from Eleven Labs
 app.get('/voices', async (req, res) => {
