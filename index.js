@@ -21,10 +21,13 @@ function cacheSet(key, value) {
 }
 const PORT = process.env.PORT || 5000;
 
+// API key with fallback
+const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY || 'dfd16d29e66b3bd218e543f42a265fe67b55ea14469abb4c79e76c7016277aef';
+
 // Log environment status
 console.log('Environment check:');
 console.log('- PORT:', PORT);
-console.log('- ELEVEN_API_KEY:', process.env.ELEVEN_API_KEY ? '✅ Set (length: ' + process.env.ELEVEN_API_KEY.length + ')' : '❌ NOT SET');
+console.log('- ELEVEN_API_KEY:', ELEVEN_API_KEY ? '✅ Set (length: ' + ELEVEN_API_KEY.length + ')' : '❌ NOT SET');
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 // --- CORS (keep) ---
@@ -40,7 +43,7 @@ app.get('/voices', async (req, res) => {
     const r = await fetch('https://api.elevenlabs.io/v1/voices', {
       method: 'GET',
       headers: {
-        'xi-api-key': process.env.ELEVEN_API_KEY,
+        'xi-api-key': ELEVEN_API_KEY,
         'accept': 'application/json',
       },
     });
@@ -102,7 +105,7 @@ async function elevenTTS(payload) {
   const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}`, {
     method: "POST",
     headers: {
-      "xi-api-key": process.env.ELEVEN_API_KEY,
+      "xi-api-key": ELEVEN_API_KEY,
       "accept": "audio/mpeg",
       "content-type": "application/json",
     },
