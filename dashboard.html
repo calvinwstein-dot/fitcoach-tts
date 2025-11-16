@@ -110,71 +110,20 @@
       40% { transform: scale(1); }
     }
     .runner-stick {
-      width: 45px;
-      height: 45px;
+      width: 50px;
+      height: 50px;
       position: relative;
       display: inline-block;
-      animation: stick-run 0.5s steps(2) infinite;
-    }
-    .runner-stick .head {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #000;
-      position: absolute;
-      top: 0;
-      left: 16px;
-    }
-    .runner-stick .body {
-      width: 3px;
-      height: 18px;
-      background: #000;
-      position: absolute;
-      top: 12px;
-      left: 21px;
-    }
-    .runner-stick .arm {
-      width: 16px;
-      height: 3px;
-      background: #000;
-      position: absolute;
-      top: 16px;
-      transform-origin: left center;
-    }
-    .runner-stick .arm.front {
-      left: 21px;
-      transform: rotate(-35deg);
-    }
-    .runner-stick .arm.back {
-      right: 11px;
-      transform: rotate(25deg);
-    }
-    .runner-stick .leg {
-      width: 3px;
-      height: 18px;
-      background: #000;
-      position: absolute;
-      top: 30px;
-      transform-origin: top center;
-    }
-    .runner-stick .leg.front {
-      left: 23px;
-      transform: rotate(25deg);
-    }
-    .runner-stick .leg.back {
-      left: 19px;
-      transform: rotate(-15deg);
-    }
-    @keyframes stick-run {
-      0%, 100% {
-        transform: translateY(0px);
-      }
-      50% {
-        transform: translateY(-2px);
-      }
     }
     .runner-stick g {
-      animation: none;
+      animation: stick-run 0.5s steps(2) infinite;
+    }
+    @keyframes stick-run {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .runner-stick #runFrame2 {
+      animation: stick-run-alt 0.5s steps(2) infinite;
     }
     @keyframes stick-run-alt {
       0% { opacity: 0; }
@@ -373,14 +322,36 @@
           <div class="metric-label">Distance</div>
           <div class="metric-value">
             <span id="distDisplay">0.00</span>
-            <div class="runner-stick">
-              <div class="head"></div>
-              <div class="body"></div>
-              <div class="arm front"></div>
-              <div class="arm back"></div>
-              <div class="leg front"></div>
-              <div class="leg back"></div>
-            </div>
+            <svg class="runner-stick" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
+              <g id="runFrame1">
+                <!-- Head -->
+                <circle cx="20" cy="12" r="8" fill="black"/>
+                <!-- Body (leaning forward) -->
+                <path d="M 20 20 Q 28 30 32 42" stroke="black" stroke-width="8" fill="none" stroke-linecap="round"/>
+                <!-- Back arm (bent backward) -->
+                <path d="M 22 24 L 8 28" stroke="black" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <!-- Front arm (bent forward) -->
+                <path d="M 26 26 L 40 20" stroke="black" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <!-- Front leg (extended forward) -->
+                <path d="M 32 42 L 48 52" stroke="black" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <!-- Back leg (pushing back) -->
+                <path d="M 30 40 L 18 56" stroke="black" stroke-width="7" fill="none" stroke-linecap="round"/>
+              </g>
+              <g id="runFrame2">
+                <!-- Head -->
+                <circle cx="20" cy="12" r="8" fill="black"/>
+                <!-- Body (leaning forward) -->
+                <path d="M 20 20 Q 26 30 30 42" stroke="black" stroke-width="8" fill="none" stroke-linecap="round"/>
+                <!-- Front arm (bent forward) -->
+                <path d="M 22 24 L 10 20" stroke="black" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <!-- Back arm (bent backward) -->
+                <path d="M 24 26 L 38 30" stroke="black" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <!-- Back leg (extended backward) -->
+                <path d="M 30 42 L 12 52" stroke="black" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <!-- Front leg (lifting forward) -->
+                <path d="M 32 40 L 44 48" stroke="black" stroke-width="7" fill="none" stroke-linecap="round"/>
+              </g>
+            </svg>
           </div>
           <div class="metric-unit" id="distUnit">km</div>
         </div>
