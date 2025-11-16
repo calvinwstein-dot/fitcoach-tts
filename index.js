@@ -21,14 +21,11 @@ function cacheSet(key, value) {
 }
 const PORT = process.env.PORT || 5000;
 
-// Validate API key on startup
-if (!process.env.ELEVEN_API_KEY) {
-  console.error('❌ ERROR: ELEVEN_API_KEY environment variable is not set!');
-  console.error('Please set it in your Render dashboard: Environment → Add Environment Variable');
-  console.error('Key: ELEVEN_API_KEY');
-  console.error('Value: your_elevenlabs_api_key');
-  process.exit(1);
-}
+// Log environment status
+console.log('Environment check:');
+console.log('- PORT:', PORT);
+console.log('- ELEVEN_API_KEY:', process.env.ELEVEN_API_KEY ? '✅ Set (length: ' + process.env.ELEVEN_API_KEY.length + ')' : '❌ NOT SET');
+console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 // --- CORS (keep) ---
 app.use(cors()); // allow all origins
