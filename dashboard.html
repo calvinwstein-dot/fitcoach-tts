@@ -89,6 +89,35 @@
       color: var(--metric-color);
       line-height: 1;
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .heart-icon {
+      font-size: 2.5rem;
+      animation: heartbeat 1.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px currentColor);
+    }
+    .heart-zone-1 { color: #3b82f6; } /* Blue - 120 */
+    .heart-zone-2 { color: #fbbf24; } /* Yellow - 140 */
+    .heart-zone-3 { color: #f97316; } /* Orange - 160 */
+    .heart-zone-4 { color: #dc2626; } /* Deep Red - 180+ */
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      10% { transform: scale(1.1); }
+      20% { transform: scale(1); }
+      30% { transform: scale(1.1); }
+      40% { transform: scale(1); }
+    }
+    .runner-icon {
+      font-size: 2rem;
+      color: #000;
+      animation: run 0.8s ease-in-out infinite;
+    }
+    @keyframes run {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
     }
     .metric-unit { 
       font-size: 13px; 
@@ -273,12 +302,18 @@
         </div>
         <div class="metric-item">
           <div class="metric-label">Heart Rate</div>
-          <div class="metric-value" id="hrDisplay">140</div>
+          <div class="metric-value">
+            <span id="hrDisplay">140</span>
+            <span class="heart-icon" id="heartIcon">❤️</span>
+          </div>
           <div class="metric-unit">bpm</div>
         </div>
         <div class="metric-item">
           <div class="metric-label">Distance</div>
-          <div class="metric-value" id="distDisplay">0.00</div>
+          <div class="metric-value">
+            <span id="distDisplay">0.00</span>
+            <span class="runner-icon">🏃</span>
+          </div>
           <div class="metric-unit" id="distUnit">km</div>
         </div>
         <div class="metric-item">
@@ -559,6 +594,19 @@
       document.getElementById('timeDisplay').textContent = secToMinSec(time);
       document.getElementById('paceUnit').textContent = displayUnit;
       document.getElementById('distUnit').textContent = unit;
+      
+      // Update heart icon color based on HR zones
+      const heartIcon = document.getElementById('heartIcon');
+      heartIcon.className = 'heart-icon';
+      if (hr < 130) {
+        heartIcon.classList.add('heart-zone-1'); // Blue
+      } else if (hr < 150) {
+        heartIcon.classList.add('heart-zone-2'); // Yellow
+      } else if (hr < 170) {
+        heartIcon.classList.add('heart-zone-3'); // Orange
+      } else {
+        heartIcon.classList.add('heart-zone-4'); // Deep Red
+      }
     }
 
     function updateUnits(){
@@ -659,14 +707,25 @@
       const hrTarget = Number(document.getElementById('targetHR').value || 150);
       const style = document.getElementById('promptStyle').value;
 
+      // HR too high - tell them to slow down and breathe
       if (hr > hrTarget + 10){
         const msg = chooseTemplate('slowDown', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
         speakText(msg);
-      } else if (paceDelta > 12) {
+        log('⚠️ HR high - instructing to slow down');
+      } 
+      // Pace too slow - tell them to pick it up
+      else if (paceDelta > 15) {
         const msg = chooseTemplate('push', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
         speakText(msg);
+        log('⚡ Pace slow - instructing to speed up');
       }
-    }, 8000);
+      // Pace too fast - maintain control
+      else if (paceDelta < -15) {
+        const msg = chooseTemplate('status', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
+        speakText(msg);
+        log('📊 Status update');
+      }
+    }, 10000); // Check every 10 seconds
 
     // ============================================
     // INITIALIZATION
