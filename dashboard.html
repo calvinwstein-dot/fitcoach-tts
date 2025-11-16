@@ -97,7 +97,6 @@
     .heart-icon {
       font-size: 2.5rem;
       animation: heartbeat 1.2s ease-in-out infinite;
-      filter: drop-shadow(0 0 8px currentColor);
     }
     .heart-zone-1 { color: #3b82f6; } /* Blue - 120 */
     .heart-zone-2 { color: #fbbf24; } /* Yellow - 140 */
@@ -111,7 +110,7 @@
       40% { transform: scale(1); }
     }
     .runner-stick {
-      width: 40px;
+      width: 50px;
       height: 40px;
       position: relative;
       display: inline-block;
@@ -323,22 +322,34 @@
           <div class="metric-label">Distance</div>
           <div class="metric-value">
             <span id="distDisplay">0.00</span>
-            <svg class="runner-stick" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+            <svg class="runner-stick" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 40">
               <g id="runFrame1">
-                <circle cx="20" cy="8" r="4" fill="black"/>
-                <line x1="20" y1="12" x2="20" y2="24" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="16" x2="12" y2="20" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="16" x2="28" y2="12" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="24" x2="14" y2="34" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="24" x2="26" y2="32" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <!-- Head -->
+                <circle cx="12" cy="8" r="4" fill="black"/>
+                <!-- Body -->
+                <line x1="12" y1="12" x2="12" y2="22" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Front arm bent forward -->
+                <line x1="12" y1="14" x2="22" y2="16" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Back arm bent backward -->
+                <line x1="12" y1="14" x2="4" y2="18" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Front leg extended forward -->
+                <line x1="12" y1="22" x2="20" y2="34" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Back leg bent backward -->
+                <line x1="12" y1="22" x2="6" y2="28" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
               </g>
               <g id="runFrame2">
-                <circle cx="20" cy="8" r="4" fill="black"/>
-                <line x1="20" y1="12" x2="20" y2="24" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="16" x2="28" y2="20" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="16" x2="12" y2="12" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="24" x2="26" y2="34" stroke="black" stroke-width="2" stroke-linecap="round"/>
-                <line x1="20" y1="24" x2="14" y2="32" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <!-- Head -->
+                <circle cx="12" cy="8" r="4" fill="black"/>
+                <!-- Body -->
+                <line x1="12" y1="12" x2="12" y2="22" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Back arm bent backward (opposite) -->
+                <line x1="12" y1="14" x2="4" y2="16" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Front arm bent forward (opposite) -->
+                <line x1="12" y1="14" x2="20" y2="18" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Back leg extended backward -->
+                <line x1="12" y1="22" x2="4" y2="34" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Front leg bent forward -->
+                <line x1="12" y1="22" x2="18" y2="28" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
               </g>
             </svg>
           </div>
