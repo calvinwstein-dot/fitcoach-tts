@@ -7,4 +7,4 @@ services:
     healthCheckPath: /health
     envVars:
       - key: ELEVEN_API_KEY
-        sync: false
+        value: dfd16d29e66b3bd218e543f42a265fe67b55ea14469abb4c79e76c7016277aef
