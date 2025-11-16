@@ -110,14 +110,25 @@
       30% { transform: scale(1.1); }
       40% { transform: scale(1); }
     }
-    .runner-icon {
-      font-size: 2rem;
-      color: #000;
-      animation: run 0.8s ease-in-out infinite;
+    .runner-stick {
+      width: 40px;
+      height: 40px;
+      position: relative;
+      display: inline-block;
     }
-    @keyframes run {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-4px); }
+    .runner-stick g {
+      animation: stick-run 0.6s steps(2) infinite;
+    }
+    @keyframes stick-run {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .runner-stick #runFrame2 {
+      animation: stick-run-alt 0.6s steps(2) infinite;
+    }
+    @keyframes stick-run-alt {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
     }
     .metric-unit { 
       font-size: 13px; 
@@ -312,7 +323,24 @@
           <div class="metric-label">Distance</div>
           <div class="metric-value">
             <span id="distDisplay">0.00</span>
-            <span class="runner-icon">🏃</span>
+            <svg class="runner-stick" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+              <g id="runFrame1">
+                <circle cx="20" cy="8" r="4" fill="black"/>
+                <line x1="20" y1="12" x2="20" y2="24" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="16" x2="12" y2="20" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="16" x2="28" y2="12" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="24" x2="14" y2="34" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="24" x2="26" y2="32" stroke="black" stroke-width="2" stroke-linecap="round"/>
+              </g>
+              <g id="runFrame2">
+                <circle cx="20" cy="8" r="4" fill="black"/>
+                <line x1="20" y1="12" x2="20" y2="24" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="16" x2="28" y2="20" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="16" x2="12" y2="12" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="24" x2="26" y2="34" stroke="black" stroke-width="2" stroke-linecap="round"/>
+                <line x1="20" y1="24" x2="14" y2="32" stroke="black" stroke-width="2" stroke-linecap="round"/>
+              </g>
+            </svg>
           </div>
           <div class="metric-unit" id="distUnit">km</div>
         </div>
