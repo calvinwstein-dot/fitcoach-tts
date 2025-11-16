@@ -110,20 +110,71 @@
       40% { transform: scale(1); }
     }
     .runner-stick {
-      width: 50px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       position: relative;
       display: inline-block;
+      animation: stick-run 0.5s steps(2) infinite;
     }
-    .runner-stick g {
-      animation: stick-run 0.6s steps(2) infinite;
+    .runner-stick .head {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #000;
+      position: absolute;
+      top: 0;
+      left: 16px;
+    }
+    .runner-stick .body {
+      width: 3px;
+      height: 18px;
+      background: #000;
+      position: absolute;
+      top: 12px;
+      left: 21px;
+    }
+    .runner-stick .arm {
+      width: 16px;
+      height: 3px;
+      background: #000;
+      position: absolute;
+      top: 16px;
+      transform-origin: left center;
+    }
+    .runner-stick .arm.front {
+      left: 21px;
+      transform: rotate(-35deg);
+    }
+    .runner-stick .arm.back {
+      right: 11px;
+      transform: rotate(25deg);
+    }
+    .runner-stick .leg {
+      width: 3px;
+      height: 18px;
+      background: #000;
+      position: absolute;
+      top: 30px;
+      transform-origin: top center;
+    }
+    .runner-stick .leg.front {
+      left: 23px;
+      transform: rotate(25deg);
+    }
+    .runner-stick .leg.back {
+      left: 19px;
+      transform: rotate(-15deg);
     }
     @keyframes stick-run {
-      0% { opacity: 1; }
-      50% { opacity: 0; }
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-2px);
+      }
     }
-    .runner-stick #runFrame2 {
-      animation: stick-run-alt 0.6s steps(2) infinite;
+    .runner-stick g {
+      animation: none;
     }
     @keyframes stick-run-alt {
       0% { opacity: 0; }
@@ -322,36 +373,14 @@
           <div class="metric-label">Distance</div>
           <div class="metric-value">
             <span id="distDisplay">0.00</span>
-            <svg class="runner-stick" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 40">
-              <g id="runFrame1">
-                <!-- Head -->
-                <circle cx="12" cy="8" r="4" fill="black"/>
-                <!-- Body -->
-                <line x1="12" y1="12" x2="12" y2="22" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Front arm bent forward -->
-                <line x1="12" y1="14" x2="22" y2="16" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Back arm bent backward -->
-                <line x1="12" y1="14" x2="4" y2="18" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Front leg extended forward -->
-                <line x1="12" y1="22" x2="20" y2="34" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Back leg bent backward -->
-                <line x1="12" y1="22" x2="6" y2="28" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-              </g>
-              <g id="runFrame2">
-                <!-- Head -->
-                <circle cx="12" cy="8" r="4" fill="black"/>
-                <!-- Body -->
-                <line x1="12" y1="12" x2="12" y2="22" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Back arm bent backward (opposite) -->
-                <line x1="12" y1="14" x2="4" y2="16" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Front arm bent forward (opposite) -->
-                <line x1="12" y1="14" x2="20" y2="18" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Back leg extended backward -->
-                <line x1="12" y1="22" x2="4" y2="34" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Front leg bent forward -->
-                <line x1="12" y1="22" x2="18" y2="28" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
-              </g>
-            </svg>
+            <div class="runner-stick">
+              <div class="head"></div>
+              <div class="body"></div>
+              <div class="arm front"></div>
+              <div class="arm back"></div>
+              <div class="leg front"></div>
+              <div class="leg back"></div>
+            </div>
           </div>
           <div class="metric-unit" id="distUnit">km</div>
         </div>
