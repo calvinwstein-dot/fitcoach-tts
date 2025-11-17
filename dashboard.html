@@ -333,6 +333,11 @@
       </div>
 
       <div class="setting-group">
+        <label>Your Name (Optional)</label>
+        <input type="text" id="userName" placeholder="Enter your name" oninput="updateUserName()">
+      </div>
+
+      <div class="setting-group">
         <label>Voice</label>
         <select id="voiceSelect"></select>
       </div>
@@ -383,6 +388,8 @@
     let voices = [];
     let unit = 'km'; // 'km' or 'miles'
     let runInterval = null;
+    let userName = '';
+    let lastKmMilestone = 0;
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -500,37 +507,42 @@
     const templates = {
       motivational: {
         push: [
-          "Let's go! Push now for thirty seconds! Quick feet, strong arms, you've got this!",
+          "Let's go{name}! Push now for thirty seconds! Quick feet, strong arms, you've got this!",
           "Yes! Accelerate right now! Feel that power! This is your moment!",
-          "Dig deep! Give me everything you've got! Thirty seconds of pure effort! Let's go!",
+          "Dig deep{name}! Give me everything you've got! Thirty seconds of pure effort! Let's go!",
           "Come on! Pick it up! Show me what you're made of! Powerful strides! You're unstoppable!"
         ],
         slowDown: [
-          "Okay, breathe! Nice and easy now. Deep breaths. You're doing amazing! Settle into your rhythm.",
+          "Okay{name}, breathe! Nice and easy now. Deep breaths. You're doing amazing! Settle into your rhythm.",
           "Easy does it! Bring it down. Two big deep breaths for me. Feel that recovery. Beautiful!",
-          "Relax those shoulders! Shake it out! You're in control! Conserve that energy, you're doing great!",
+          "Relax those shoulders{name}! Shake it out! You're in control! Conserve that energy, you're doing great!",
           "Perfect! Ease off now. Let your heart rate come down. You've earned this recovery!"
         ],
         status: [
-          "You're at {dist}! Pace is {pace}, heart rate {hr}. You're looking strong out there! Keep it up!",
+          "You're at {dist}{name}! Pace is {pace}, heart rate {hr}. You're looking strong out there! Keep it up!",
           "Crushing it at {dist}! Heart rate {hr}, pace {pace}. Stay focused! You're doing incredible!",
           "Wow! {dist} down! Pace {pace}, heart rate {hr}. This is your run! Keep that energy high!"
         ]
       },
       calm: {
         push: [
-          "Alright, let's pick up the pace a little bit now! Nice and smooth, you're doing beautifully!",
+          "Alright{name}, let's pick up the pace a little bit now! Nice and smooth, you're doing beautifully!",
           "Great! Nudge it up just a touch. Stay controlled and relaxed. Perfect form!",
           "Here we go, a gentle push now! Light feet, easy breathing. You've got this under control!"
         ],
         slowDown: [
-          "Perfect! Ease off gradually now. Breathe through your nose. Long, smooth breaths.",
-          "Excellent! Slow down just a touch. Let your heart rate settle. You're doing wonderfully!",
+          "Perfect{name}! Ease off gradually now. Breathe through your nose. Long, smooth breaths.",
+          "Excellent! Slow down just a touch{name}. Let your heart rate settle. You're doing wonderfully!",
           "Beautiful! Take it easy now. Reduce your effort. Really controlled running!"
         ],
         status: [
-          "Looking great! Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this steady rhythm!",
+          "Looking great{name}! Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this steady rhythm!",
           "Fantastic! At {dist} now. Keep this calm, controlled pace. You're doing amazing!"
+        ],
+        milestone: [
+          "Nice work{name}! You've reached {dist}. Keep that momentum going!",
+          "Excellent{name}! {dist} complete. You're looking strong out there!",
+          "Great job{name}! That's {dist} down. Stay focused and keep it up!"
         ]
       },
       technical: {
@@ -561,6 +573,9 @@
       
       // Replace variables
       t = t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
+      
+      // Replace name (add space before name if it exists, otherwise empty)
+      t = t.replace(/\{name\}/g, userName ? ' ' + userName : '');
       
       // Format for better speech: convert "5:00" to "5 minutes" and "140" to "one forty"
       t = t.replace(/(\d+):(\d+)/g, (match, min, sec) => {
@@ -638,6 +653,11 @@
       document.getElementById(id + 'Value').textContent = value;
     }
 
+    function updateUserName(){
+      userName = document.getElementById('userName').value.trim();
+      log('Name updated to: ' + (userName || 'None'));
+    }
+
     // ============================================
     // MODAL CONTROLS
     // ============================================
@@ -675,6 +695,17 @@
         time++;
         dist += (1 / pace) / 60;
         hr = Math.round(Math.max(60, Math.min(200, hr + (Math.random() - 0.5) * 3)));
+        
+        // Check for kilometer/mile milestones
+        const currentKm = Math.floor(dist);
+        if (currentKm > lastKmMilestone && currentKm > 0) {
+          lastKmMilestone = currentKm;
+          const distStr = (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2) + ' ' + unit;
+          const msg = chooseTemplate('milestone', {dist: distStr});
+          speakText(msg);
+          log('🎯 Milestone: ' + currentKm + ' km');
+        }
+        
         updateDisplays();
       }, 1000);
     }
