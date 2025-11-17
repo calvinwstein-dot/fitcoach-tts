@@ -506,21 +506,21 @@
     const templates = {
       motivational: {
         push: [
-          "LET'S GO! Push NOW for thirty seconds! Quick feet, strong arms, you've GOT this!",
-          "YES! Accelerate RIGHT NOW! Feel that power! This is YOUR moment!",
-          "DIG DEEP! Give me everything you've got! Thirty seconds of PURE EFFORT! Let's GO!",
-          "COME ON! Pick it up! Show me what you're made of! POWERFUL strides! You're UNSTOPPABLE!"
+          "Let's go! Push now for thirty seconds! Quick feet, strong arms, you've got this!",
+          "Yes! Accelerate right now! Feel that power! This is your moment!",
+          "Dig deep! Give me everything you've got! Thirty seconds of pure effort! Let's go!",
+          "Come on! Pick it up! Show me what you're made of! Powerful strides! You're unstoppable!"
         ],
         slowDown: [
-          "Okay, BREATHE! Nice and easy now. Deep breaths. You're doing AMAZING! Settle into your rhythm.",
+          "Okay, breathe! Nice and easy now. Deep breaths. You're doing amazing! Settle into your rhythm.",
           "Easy does it! Bring it down. Two big deep breaths for me. Feel that recovery. Beautiful!",
-          "Relax those shoulders! Shake it out! You're in CONTROL! Conserve that energy, you're doing GREAT!",
-          "Perfect! Ease off now. Let your heart rate come down. You've EARNED this recovery!"
+          "Relax those shoulders! Shake it out! You're in control! Conserve that energy, you're doing great!",
+          "Perfect! Ease off now. Let your heart rate come down. You've earned this recovery!"
         ],
         status: [
-          "You're at {dist}! Pace is {pace}, heart rate {hr}. You're looking STRONG out there! Keep it up!",
-          "CRUSHING it at {dist}! Heart rate {hr}, pace {pace}. Stay focused! You're doing INCREDIBLE!",
-          "WOW! {dist} down! Pace {pace}, heart rate {hr}. This is YOUR run! Keep that energy HIGH!"
+          "You're at {dist}! Pace is {pace}, heart rate {hr}. You're looking strong out there! Keep it up!",
+          "Crushing it at {dist}! Heart rate {hr}, pace {pace}. Stay focused! You're doing incredible!",
+          "Wow! {dist} down! Pace {pace}, heart rate {hr}. This is your run! Keep that energy high!"
         ]
       },
       calm: {
@@ -563,8 +563,47 @@
       const style = usePushStyle ? 'motivational' : 'calm';
       const styleSet = templates[style] || templates['calm'];
       const arr = styleSet[kind] || [kind];
-      const t = arr[Math.floor(Math.random()*arr.length)];
-      return t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
+      let t = arr[Math.floor(Math.random()*arr.length)];
+      
+      // Replace variables
+      t = t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
+      
+      // Format for better speech: convert "5:00" to "5 minutes" and "140" to "one forty"
+      t = t.replace(/(\d+):(\d+)/g, (match, min, sec) => {
+        if (sec === '00') {
+          return `${min} minutes`;
+        } else {
+          return `${min} minutes ${sec} seconds`;
+        }
+      });
+      
+      // Format heart rate (e.g., "140" -> "one forty", "165" -> "one sixty five")
+      t = t.replace(/heart rate (\d+)/gi, (match, hr) => {
+        if (hr.length === 3) {
+          const hundreds = hr[0];
+          const tens = hr[1];
+          const ones = hr[2];
+          if (ones === '0') {
+            return `heart rate ${hundreds === '1' ? 'one' : hundreds} ${tens === '0' ? 'hundred' : tens + 'ty'}`;
+          } else {
+            return `heart rate ${hundreds === '1' ? 'one' : hundreds} ${tens === '0' ? '' : tens}${ones}`;
+          }
+        }
+        return match;
+      });
+      
+      // Format distance (e.g., "5.23" -> "five point two three kilometers")
+      t = t.replace(/([\d.]+)\s*(km|kilometers|mi|miles)/gi, (match, num, unit) => {
+        const parts = num.split('.');
+        let result = parts[0];
+        if (parts[1]) {
+          result += ' point ' + parts[1].split('').join(' ');
+        }
+        result += ' ' + (unit === 'km' ? 'kilometers' : unit === 'mi' ? 'miles' : unit);
+        return result;
+      });
+      
+      return t;
     }
 
     // ============================================
