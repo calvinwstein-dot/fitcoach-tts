@@ -620,6 +620,11 @@
       // Replace name (add space before name if it exists, otherwise empty)
       t = t.replace(/\{name\}/g, userName ? ' ' + userName : '');
       
+      // Add unit after distance values
+      const unitText = unit === 'miles' ? ' miles' : ' kilometers';
+      t = t.replace(/distance (\d+\.?\d*)/gi, `distance $1${unitText}`);
+      t = t.replace(/(\d+\.?\d*) (complete|down|now)/gi, `$1${unitText} $2`);
+      
       // Format pace with "point" for decimals (e.g., "5:30" -> "5 30 per kilometer")
       t = t.replace(/pace (\d+):(\d+)/gi, (match, min, sec) => {
         const unitText = unit === 'miles' ? 'per mile' : 'per kilometer';
@@ -633,18 +638,6 @@
       // Format heart rate - just use the number, TTS handles it better
       t = t.replace(/heart rate (\d+)/gi, (match, hr) => {
         return `heart rate ${hr}`;
-      });
-      
-      // Format distance - explicitly use "point" for decimals
-      t = t.replace(/distance (\d+)\.(\d+)/gi, (match, whole, decimal) => {
-        const unitText = unit === 'miles' ? 'miles' : 'kilometers';
-        return `distance ${whole} point ${decimal} ${unitText}`;
-      });
-      
-      // Handle distance without decimals
-      t = t.replace(/distance (\d+)(?!\s*point)/gi, (match, num) => {
-        const unitText = unit === 'miles' ? 'miles' : 'kilometers';
-        return `distance ${num} ${unitText}`;
       });
       
       return t;
@@ -794,7 +787,7 @@
         const currentKm = Math.floor(dist);
         if (currentKm > lastKmMilestone && currentKm > 0) {
           lastKmMilestone = currentKm;
-          const distStr = (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2) + ' ' + unit;
+          const distStr = (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2);
           const msg = chooseTemplate('milestone', {dist: distStr});
           speakText(msg);
           log('🎯 Milestone: ' + currentKm + ' km');
