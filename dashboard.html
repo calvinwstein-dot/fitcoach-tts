@@ -611,15 +611,10 @@
         return match;
       });
       
-      // Format distance (e.g., "5.23" -> "five point two three kilometers")
-      t = t.replace(/([\d.]+)\s*(km|kilometers|mi|miles)/gi, (match, num, unit) => {
-        const parts = num.split('.');
-        let result = parts[0];
-        if (parts[1]) {
-          result += ' point ' + parts[1].split('').join(' ');
-        }
-        result += ' ' + (unit === 'km' ? 'kilometers' : unit === 'mi' ? 'miles' : unit);
-        return result;
+      // Format distance (e.g., "5.23" -> "5.23 kilometers")
+      t = t.replace(/distance (\d+\.?\d*)/gi, (match, num) => {
+        const unitText = unit === 'miles' ? 'miles' : 'kilometers';
+        return `distance ${num} ${unitText}`;
       });
       
       return t;
@@ -739,7 +734,7 @@
       const msg = chooseTemplate('status', {
         pace: secToMinSec(pace), 
         hr, 
-        dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2) + ' ' + unit
+        dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2)
       });
       speakText(msg);
     }
