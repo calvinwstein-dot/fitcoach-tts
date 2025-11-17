@@ -481,10 +481,10 @@
     // ============================================
     async function speakText(text){
       const voice = document.getElementById('voiceSelect').value || '';
-      // Optimized settings for clear, natural, enthusiastic speech
-      const style = 0.75;      // Slightly lower for more control
-      const stability = 0.5;   // Balanced for clarity and emotion
-      const similarity = 0.8;  // Good voice consistency
+      // Maximum realism and expressiveness for encouraging coaching
+      const style = 1.0;       // Maximum expressiveness
+      const stability = 0.4;   // Lower for more natural emotion and variation
+      const similarity = 0.9;  // High voice consistency
       
       // Add pauses for clarity using commas
       const clearText = text
