@@ -529,7 +529,7 @@
         const blob = await r.blob();
         const src = URL.createObjectURL(blob);
         const player = document.getElementById('player');
-        player.playbackRate = 0.95;  // Near natural speed
+        player.playbackRate = 0.85;  // Slower for clearer pronunciation
         player.src = src;
         player.play().catch(()=>{});
       }catch(e){
@@ -618,17 +618,17 @@
       
       // Format any standalone distance numbers (with decimals) - match number.number pattern
       t = t.replace(/\b(\d+)\.(\d+)\b/gi, (match, whole, decimal) => {
-        const decimalSpoken = decimal.split('').join(' ');
-        return `${whole} point ${decimalSpoken}${unitText}`;
+        const decimalSpoken = decimal.split('').map(d => d).join(', ');
+        return `, ${whole}, point, ${decimalSpoken}, ${unitText},`;
       });
       
       // Format pace with "point" for decimals (e.g., "5:30" -> "5 point 30 per kilometer")
       t = t.replace(/(\d+):(\d+)/g, (match, min, sec) => {
         const paceUnit = unit === 'miles' ? 'per mile' : 'per kilometer';
         if (sec === '00') {
-          return `${min} minutes ${paceUnit}`;
+          return `, ${min} minutes ${paceUnit},`;
         } else {
-          return `${min} point ${sec} ${paceUnit}`;
+          return `, ${min}, point, ${sec}, ${paceUnit},`;
         }
       });
       
