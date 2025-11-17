@@ -464,50 +464,47 @@
         const data = await r.json();
         voices = Array.isArray(data) ? data : (data.voices || []);
         
-        const male = [];
-        const female = [];
-        const maleNames = ['roger','clyde','john','david','michael','james','robert','chris','daniel','tom','alex','brian','bill'];
-        const femaleNames = ['sarah','emma','olivia','ava','sophia','mia','isabella','emily','anna','kate','lisa','lily','rachel'];
+        // Filter for Australian accent voices only
+        const australian = [];
+        const australianNames = ['charlie', 'matilda', 'nicole', 'freya', 'brian', 'chris', 'callum', 'harry'];
 
         voices.forEach(v=>{
           const id = v.voice_id || v.id || v.voiceId;
-          const name = (v.name || v.voice_name || id || '').toString();
-          const genderRaw = (v.gender || (v.labels && v.labels.gender) || '').toString().toLowerCase();
-          let g = null;
-          if (genderRaw.includes('male') && !genderRaw.includes('female')) g = 'male';
-          else if (genderRaw.includes('female')) g = 'female';
+          const name = (v.name || v.voice_name || id || '').toString().toLowerCase();
+          const labels = v.labels || {};
+          const accent = (labels.accent || '').toString().toLowerCase();
           
-          if (!g) {
-            const first = name.split(' ')[0].toLowerCase();
-            if (maleNames.includes(first)) g = 'male';
-            else if (femaleNames.includes(first)) g = 'female';
+          // Check if voice is Australian by accent label or name
+          if (accent.includes('australia') || australianNames.some(ausName => name.includes(ausName))) {
+            australian.push({ id, name: v.name || v.voice_name || name });
           }
-
-          const obj = { id, name };
-          if (g === 'male') male.push(obj);
-          else if (g === 'female') female.push(obj);
         });
 
         const select = document.getElementById('voiceSelect');
         select.innerHTML = '';
         
-        const addGroup = (label, list) => {
-          if (list.length === 0) return;
+        if (australian.length === 0) {
+          log('No Australian voices found, loading all voices');
+          // Fallback to all voices if no Australian found
+          voices.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.voice_id || v.id || v.voiceId;
+            opt.textContent = v.name || v.voice_name || 'Unknown';
+            select.appendChild(opt);
+          });
+        } else {
           const group = document.createElement('optgroup');
-          group.label = label;
-          list.slice(0, 3).forEach(v => {
+          group.label = 'Australian Voices';
+          australian.forEach(v => {
             const opt = document.createElement('option');
             opt.value = v.id;
             opt.textContent = v.name;
             group.appendChild(opt);
           });
           select.appendChild(group);
+          log(`Loaded ${australian.length} Australian voices`);
         }
 
-        addGroup('Female', female);
-        addGroup('Male', male);
-
-        log(`Loaded ${female.length} female and ${male.length} male voices`);
       }catch(e){
         log('Could not load voices: ' + e.message);
       }
