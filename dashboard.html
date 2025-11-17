@@ -481,19 +481,25 @@
     // ============================================
     async function speakText(text){
       const voice = document.getElementById('voiceSelect').value || '';
-      // Maximum expressiveness for motivational coaching
-      const style = 1.0;
-      const stability = 0.3;  // Lower stability = more emotion
-      const similarity = 1.0;  // Maximum similarity boost
-      log('Speaking: ' + text);
+      // Optimized settings for clear, natural, enthusiastic speech
+      const style = 0.75;      // Slightly lower for more control
+      const stability = 0.5;   // Balanced for clarity and emotion
+      const similarity = 0.8;  // Good voice consistency
+      
+      // Add pauses for clarity using commas
+      const clearText = text
+        .replace(/!/g, ',!')  // Pause before excitement
+        .replace(/\. /g, '., '); // Pause between sentences
+      
+      log('Speaking: ' + clearText);
       try{
-        const url = `/tts?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}&style=${encodeURIComponent(style)}&stability=${encodeURIComponent(stability)}&similarity=${encodeURIComponent(similarity)}`;
+        const url = `/tts?text=${encodeURIComponent(clearText)}&voice=${encodeURIComponent(voice)}&style=${encodeURIComponent(style)}&stability=${encodeURIComponent(stability)}&similarity=${encodeURIComponent(similarity)}`;
         const r = await fetch(url);
         if (!r.ok) throw new Error('TTS failed: ' + r.status);
         const blob = await r.blob();
         const src = URL.createObjectURL(blob);
         const player = document.getElementById('player');
-        player.playbackRate = 0.85;  // Slightly slower for clarity
+        player.playbackRate = 0.9;  // Slightly slower for clarity
         player.src = src;
         player.play().catch(()=>{});
       }catch(e){
