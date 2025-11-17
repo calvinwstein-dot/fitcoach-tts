@@ -344,15 +344,6 @@
       </div>
 
       <div class="setting-group">
-        <label>Prompt Style</label>
-        <select id="promptStyle">
-          <option value="motivational">Motivational</option>
-          <option value="calm">Calm</option>
-          <option value="technical">Technical</option>
-        </select>
-      </div>
-
-      <div class="setting-group">
         <label>Distance Unit</label>
         <select id="unitSelect" onchange="updateUnits()">
           <option value="km">Kilometers</option>
@@ -566,8 +557,11 @@
       }
     }
 
-    function chooseTemplate(kind, vars={}, style='motivational'){
-      const styleSet = templates[style] || templates['motivational'];
+    function chooseTemplate(kind, vars={}, forceStyle=null){
+      // Use motivational/technical combined style only when pace is too slow (>7:30 = 450 seconds)
+      const usePushStyle = forceStyle === 'push' || (kind === 'push' && pace > 450);
+      const style = usePushStyle ? 'motivational' : 'calm';
+      const styleSet = templates[style] || templates['calm'];
       const arr = styleSet[kind] || [kind];
       const t = arr[Math.floor(Math.random()*arr.length)];
       return t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
@@ -668,12 +662,11 @@
     }
 
     function testVoice(){
-      const style = document.getElementById('promptStyle').value;
       const msg = chooseTemplate('status', {
         pace: secToMinSec(pace), 
         hr, 
         dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2) + ' ' + unit
-      }, style);
+      });
       speakText(msg);
     }
 
@@ -696,23 +689,22 @@
       const targetPace = parseMinSec(document.getElementById('targetPace').value || '5:00');
       const paceDelta = pace - targetPace;
       const hrTarget = Number(document.getElementById('targetHR').value || 150);
-      const style = document.getElementById('promptStyle').value;
 
       // HR too high - tell them to slow down and breathe
       if (hr > hrTarget + 10){
-        const msg = chooseTemplate('slowDown', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
+        const msg = chooseTemplate('slowDown', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)});
         speakText(msg);
         log('⚠️ HR high - instructing to slow down');
       } 
-      // Pace too slow - tell them to pick it up
+      // Pace too slow - tell them to pick it up (will use motivational style automatically)
       else if (paceDelta > 15) {
-        const msg = chooseTemplate('push', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
+        const msg = chooseTemplate('push', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)});
         speakText(msg);
         log('⚡ Pace slow - instructing to speed up');
       }
       // Pace too fast - maintain control
       else if (paceDelta < -15) {
-        const msg = chooseTemplate('status', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)}, style);
+        const msg = chooseTemplate('status', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)});
         speakText(msg);
         log('📊 Status update');
       }
