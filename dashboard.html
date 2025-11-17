@@ -592,11 +592,16 @@
         return `heart rate ${hr}`;
       });
       
-      // Format distance - round to whole number to avoid decimal pronunciation issues
-      t = t.replace(/distance (\d+\.?\d*)/gi, (match, num) => {
+      // Format distance - explicitly use "point" for decimals
+      t = t.replace(/distance (\d+)\.(\d+)/gi, (match, whole, decimal) => {
         const unitText = unit === 'miles' ? 'miles' : 'kilometers';
-        const rounded = Math.round(parseFloat(num));
-        return `distance ${rounded} ${unitText}`;
+        return `distance ${whole} point ${decimal} ${unitText}`;
+      });
+      
+      // Handle distance without decimals
+      t = t.replace(/distance (\d+)(?!\s*point)/gi, (match, num) => {
+        const unitText = unit === 'miles' ? 'miles' : 'kilometers';
+        return `distance ${num} ${unitText}`;
       });
       
       return t;
