@@ -367,6 +367,11 @@
       </div>
 
       <div class="setting-group">
+        <label>Your Age (for HR zones)</label>
+        <input type="number" id="userAge" value="30" min="18" max="100" oninput="updateAge()">
+      </div>
+
+      <div class="setting-group">
         <label>Voice</label>
         <select id="voiceSelect"></select>
       </div>
@@ -419,6 +424,9 @@
     let runInterval = null;
     let userName = '';
     let lastKmMilestone = 0;
+    let userAge = 30; // Default age
+    let hrMax = 190; // Will be calculated from age
+    let highHrStartTime = null; // Track when HR goes too high
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -656,17 +664,17 @@
       document.getElementById('paceUnit').textContent = displayUnit;
       document.getElementById('distUnit').textContent = unit;
       
-      // Update heart icon color based on HR zones
+      // Update heart icon color based on HR zones (% of HRmax)
+      const zone = getHRZone(hr, hrMax);
       const heartIcon = document.getElementById('heartIcon');
       heartIcon.className = 'heart-icon';
-      if (hr < 130) {
-        heartIcon.classList.add('heart-zone-1'); // Blue
-      } else if (hr < 150) {
-        heartIcon.classList.add('heart-zone-2'); // Yellow
-      } else if (hr < 170) {
-        heartIcon.classList.add('heart-zone-3'); // Orange
-      } else {
-        heartIcon.classList.add('heart-zone-4'); // Deep Red
+      heartIcon.style.color = zone.color;
+      
+      // Check for HR safety warnings
+      const safety = checkHRSafety(hr, hrMax);
+      if (safety && running) {
+        speakText(safety.message);
+        log(`⚠️ HR Safety: ${safety.level} - Zone ${zone.zone}`);
       }
     }
 
@@ -683,6 +691,65 @@
     function updateUserName(){
       userName = document.getElementById('userName').value.trim();
       log('Name updated to: ' + (userName || 'None'));
+    }
+
+    function updateAge(){
+      userAge = Number(document.getElementById('userAge').value) || 30;
+      hrMax = 220 - userAge;
+      log(`Age: ${userAge}, Max HR: ${hrMax}`);
+    }
+
+    function getHRZone(hr, hrMax) {
+      const pct = hr / hrMax;
+      if (pct < 0.6) return { zone: 1, name: "Very Easy", color: "#3b82f6" };
+      if (pct < 0.7) return { zone: 2, name: "Easy", color: "#10b981" };
+      if (pct < 0.8) return { zone: 3, name: "Moderate", color: "#fbbf24" };
+      if (pct < 0.9) return { zone: 4, name: "Hard", color: "#f97316" };
+      return { zone: 5, name: "Very Hard", color: "#dc2626" };
+    }
+
+    function checkHRSafety(hr, hrMax) {
+      const pct = hr / hrMax;
+      const now = Date.now();
+      
+      // Danger: > 95% HRmax
+      if (pct > 0.95) {
+        return {
+          level: 'danger',
+          message: "Your heart rate is extremely high. Stop running now and walk slowly. If you feel unwell, seek medical help."
+        };
+      }
+      
+      // Hard warning: > 90% HRmax
+      if (pct > 0.9) {
+        if (!highHrStartTime) highHrStartTime = now;
+        const duration = (now - highHrStartTime) / 1000;
+        
+        if (duration > 30) {
+          return {
+            level: 'warning',
+            message: "Your heart rate is very high. Please slow down or walk until your heart rate drops back to a comfortable level."
+          };
+        }
+      }
+      
+      // Caution: > 85% HRmax
+      if (pct > 0.85) {
+        if (!highHrStartTime) highHrStartTime = now;
+        const duration = (now - highHrStartTime) / 1000;
+        
+        if (duration > 60) {
+          return {
+            level: 'caution',
+            message: "You're working pretty hard now. If this isn't intentional, try slowing your pace."
+          };
+        }
+      } else {
+        // Reset timer when HR drops below 85%
+        highHrStartTime = null;
+      }
+      
+      return null;
     }
 
     // ============================================
@@ -804,6 +871,7 @@
     // ============================================
     // INITIALIZATION
     // ============================================
+    updateAge();
     updateDisplays();
     loadVoices();
     log('Dashboard ready');
