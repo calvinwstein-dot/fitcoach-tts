@@ -615,32 +615,21 @@
       
       // Add unit after distance values and format decimals clearly
       const unitText = unit === 'miles' ? ' miles' : ' kilometers';
-      // Format distance with explicit decimal reading (e.g., "8.00" -> "8 point zero zero")
-      t = t.replace(/distance (\d+)\.(\d+)/gi, (match, whole, decimal) => {
-        const decimalSpoken = decimal.split('').join(' ');
-        return `distance ${whole} point ${decimalSpoken}${unitText}`;
-      });
-      // Format numbers followed by "complete", "down", "now" with decimals
-      t = t.replace(/(\d+)\.(\d+) (complete|down|now)/gi, (match, whole, decimal, word) => {
-        const decimalSpoken = decimal.split('').join(' ');
-        return `${whole} point ${decimalSpoken}${unitText} ${word}`;
-      });
-      // Handle whole numbers without decimals
-      t = t.replace(/distance (\d+)(?!\s*point)/gi, `distance $1${unitText}`);
       
-      // Format pace with "point" for decimals (e.g., "5:30" -> "5 30 per kilometer")
-      t = t.replace(/pace (\d+):(\d+)/gi, (match, min, sec) => {
-        const unitText = unit === 'miles' ? 'per mile' : 'per kilometer';
+      // Format any standalone distance numbers (with decimals) - match number.number pattern
+      t = t.replace(/\b(\d+)\.(\d+)\b/gi, (match, whole, decimal) => {
+        const decimalSpoken = decimal.split('').join(' ');
+        return `${whole} point ${decimalSpoken}${unitText}`;
+      });
+      
+      // Format pace with "point" for decimals (e.g., "5:30" -> "5 point 30 per kilometer")
+      t = t.replace(/(\d+):(\d+)/g, (match, min, sec) => {
+        const paceUnit = unit === 'miles' ? 'per mile' : 'per kilometer';
         if (sec === '00') {
-          return `pace ${min} minute ${unitText}`;
+          return `${min} minutes ${paceUnit}`;
         } else {
-          return `pace ${min} point ${sec} ${unitText}`;
+          return `${min} point ${sec} ${paceUnit}`;
         }
-      });
-      
-      // Format heart rate - just use the number, TTS handles it better
-      t = t.replace(/heart rate (\d+)/gi, (match, hr) => {
-        return `heart rate ${hr}`;
       });
       
       return t;
