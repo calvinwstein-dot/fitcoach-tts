@@ -577,41 +577,22 @@
       // Replace name (add space before name if it exists, otherwise empty)
       t = t.replace(/\{name\}/g, userName ? ' ' + userName : '');
       
-      // Format pace with "per kilometer" or "per mile" (e.g., "5 minutes per kilometer")
+      // Simply format pace as "X minutes Y seconds per kilometer/mile" - let TTS handle the numbers naturally
       t = t.replace(/pace (\d+):(\d+)/gi, (match, min, sec) => {
         const unitText = unit === 'miles' ? 'per mile' : 'per kilometer';
         if (sec === '00') {
-          return `pace ${min} minutes ${unitText}`;
+          return `pace ${min} minute ${unitText}`;
         } else {
-          return `pace ${min} minutes ${sec} seconds ${unitText}`;
+          return `pace ${min} ${sec} ${unitText}`;
         }
       });
       
-      // Format standalone time patterns (but not pace)
-      t = t.replace(/(\d+):(\d+)(?! per)/g, (match, min, sec) => {
-        if (sec === '00') {
-          return `${min} minutes`;
-        } else {
-          return `${min} minutes ${sec} seconds`;
-        }
-      });
-      
-      // Format heart rate (e.g., "140" -> "one forty", "165" -> "one sixty five")
+      // Format heart rate - just use the number, TTS handles it better
       t = t.replace(/heart rate (\d+)/gi, (match, hr) => {
-        if (hr.length === 3) {
-          const hundreds = hr[0];
-          const tens = hr[1];
-          const ones = hr[2];
-          if (ones === '0') {
-            return `heart rate ${hundreds === '1' ? 'one' : hundreds} ${tens === '0' ? 'hundred' : tens + 'ty'}`;
-          } else {
-            return `heart rate ${hundreds === '1' ? 'one' : hundreds} ${tens === '0' ? '' : tens}${ones}`;
-          }
-        }
-        return match;
+        return `heart rate ${hr}`;
       });
       
-      // Format distance (e.g., "5.23" -> "5.23 kilometers")
+      // Format distance - just number + unit word
       t = t.replace(/distance (\d+\.?\d*)/gi, (match, num) => {
         const unitText = unit === 'miles' ? 'miles' : 'kilometers';
         return `distance ${num} ${unitText}`;
