@@ -577,8 +577,18 @@
       // Replace name (add space before name if it exists, otherwise empty)
       t = t.replace(/\{name\}/g, userName ? ' ' + userName : '');
       
-      // Format for better speech: convert "5:00" to "5 minutes" and "140" to "one forty"
-      t = t.replace(/(\d+):(\d+)/g, (match, min, sec) => {
+      // Format pace with "per kilometer" or "per mile" (e.g., "5 minutes per kilometer")
+      t = t.replace(/pace (\d+):(\d+)/gi, (match, min, sec) => {
+        const unitText = unit === 'miles' ? 'per mile' : 'per kilometer';
+        if (sec === '00') {
+          return `pace ${min} minutes ${unitText}`;
+        } else {
+          return `pace ${min} minutes ${sec} seconds ${unitText}`;
+        }
+      });
+      
+      // Format standalone time patterns (but not pace)
+      t = t.replace(/(\d+):(\d+)(?! per)/g, (match, min, sec) => {
         if (sec === '00') {
           return `${min} minutes`;
         } else {
