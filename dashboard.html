@@ -113,6 +113,32 @@
       font-size: 13px; 
       color: var(--text-muted);
     }
+    .metric-slider {
+      width: 100%;
+      margin-top: 8px;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: #e0e0e0;
+      outline: none;
+    }
+    .metric-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--metric-color);
+      cursor: pointer;
+    }
+    .metric-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--metric-color);
+      cursor: pointer;
+      border: none;
+    }
     
     /* Control Buttons */
     .controls {
@@ -289,6 +315,7 @@
           <div class="metric-label">Avg Pace</div>
           <div class="metric-value" id="paceDisplay">5:00</div>
           <div class="metric-unit" id="paceUnit">min/km</div>
+          <input type="range" class="metric-slider" min="240" max="600" value="300" step="5" oninput="pace=Number(this.value); updateDisplays()" title="Adjust pace">
         </div>
         <div class="metric-item">
           <div class="metric-label">Heart Rate</div>
@@ -297,22 +324,24 @@
             <span class="heart-icon" id="heartIcon">❤️</span>
           </div>
           <div class="metric-unit">bpm</div>
+          <input type="range" class="metric-slider" min="60" max="200" value="140" step="1" oninput="hr=Number(this.value); updateDisplays()" title="Adjust heart rate">
         </div>
         <div class="metric-item">
           <div class="metric-label">Distance</div>
           <div class="metric-value" id="distDisplay">0.00</div>
           <div class="metric-unit" id="distUnit">km</div>
+          <input type="range" class="metric-slider" min="0" max="20" value="0" step="0.1" oninput="dist=Number(this.value); updateDisplays()" title="Adjust distance">
         </div>
         <div class="metric-item">
           <div class="metric-label">Time</div>
           <div class="metric-value" id="timeDisplay">0:00</div>
           <div class="metric-unit">min:sec</div>
+          <input type="range" class="metric-slider" min="0" max="7200" value="0" step="1" oninput="time=Number(this.value); updateDisplays()" title="Adjust time">
         </div>
       </div>
       
       <div class="controls">
         <button id="startBtn" onclick="toggleRun()">▶️ Start</button>
-        <button class="secondary" onclick="randomizeTelemetry()">🎲 Randomize</button>
         <button class="secondary" onclick="testVoice()">🔊 Test Voice</button>
       </div>
     </div>
