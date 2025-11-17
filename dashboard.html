@@ -592,10 +592,11 @@
         return `heart rate ${hr}`;
       });
       
-      // Format distance - just number + unit word
+      // Format distance - round to whole number to avoid decimal pronunciation issues
       t = t.replace(/distance (\d+\.?\d*)/gi, (match, num) => {
         const unitText = unit === 'miles' ? 'miles' : 'kilometers';
-        return `distance ${num} ${unitText}`;
+        const rounded = Math.round(parseFloat(num));
+        return `distance ${rounded} ${unitText}`;
       });
       
       return t;
