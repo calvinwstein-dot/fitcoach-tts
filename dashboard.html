@@ -804,7 +804,7 @@
       
       // Format any standalone distance numbers (with decimals) - match number.number pattern
       t = t.replace(/\b(\d+)\.(\d+)\b/gi, (match, whole, decimal) => {
-        const decimalSpoken = decimal.split('').map(d => d).join(', ');
+        const decimalSpoken = decimal.split('').map(d => d === '0' ? 'zero' : d).join(', ');
         return `, ${whole}, point, ${decimalSpoken}, ${unitText},`;
       });
       
@@ -814,7 +814,9 @@
         if (sec === '00') {
           return `, ${min} minutes ${paceUnit},`;
         } else {
-          return `, ${min}, point, ${sec}, ${paceUnit},`;
+          // Replace zeros with "zero" for clear pronunciation
+          const secSpoken = sec.split('').map(d => d === '0' ? 'zero' : d).join(', ');
+          return `, ${min}, point, ${secSpoken}, ${paceUnit},`;
         }
       });
       
