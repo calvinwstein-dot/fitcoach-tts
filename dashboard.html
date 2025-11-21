@@ -617,36 +617,12 @@
     }
 
     function chooseTemplate(kind, vars={}, forceStyle=null){
-      // Use motivational style when pace is too slow (>7:30 = 450 seconds), otherwise use calm
+      // Use motivational/technical combined style only when pace is too slow (>7:30 = 450 seconds)
       const usePushStyle = forceStyle === 'push' || (kind === 'push' && pace > 450);
       const style = usePushStyle ? 'motivational' : 'calm';
       const styleSet = templates[style] || templates['calm'];
       const arr = styleSet[kind] || [kind];
-      
-      // Track which prompts have been used and rotate through all before repeating
-      const key = `${style}_${kind}`;
-      if (!usedPrompts[key]) {
-        usedPrompts[key] = [];
-      }
-      
-      // Get available prompts (ones not used yet)
-      let availableIndices = [];
-      for (let i = 0; i < arr.length; i++) {
-        if (!usedPrompts[key].includes(i)) {
-          availableIndices.push(i);
-        }
-      }
-      
-      // If all prompts used, reset
-      if (availableIndices.length === 0) {
-        usedPrompts[key] = [];
-        availableIndices = arr.map((_, i) => i);
-      }
-      
-      // Pick a random available prompt
-      const chosenIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-      usedPrompts[key].push(chosenIndex);
-      let t = arr[chosenIndex];
+      let t = arr[Math.floor(Math.random()*arr.length)];
       
       // Replace variables
       t = t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
