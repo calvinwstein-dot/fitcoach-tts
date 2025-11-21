@@ -469,7 +469,7 @@
         
         // Curated selection: Custom voice from ElevenLabs library
         const curatedVoices = [
-          { name: 'British Male', id: '3yJq5VpFXdeyF5oOBl2e' },  // Male from voice library
+          { name: 'Mikey', id: '3yJq5VpFXdeyF5oOBl2e' },  // Male from voice library
           { name: 'British Female', id: '3yJq5VpFXdeyF5oOBl2e' }  // Female, British accent from voice library
         ];
 
@@ -501,8 +501,8 @@
           const opt = document.createElement('option');
           opt.value = v.id;
           opt.textContent = v.name;
-          // Set British Male as default
-          if (v.name.includes('British Male')) {
+          // Set Mikey as default
+          if (v.name.includes('Mikey')) {
             opt.selected = true;
           }
           select.appendChild(opt);
