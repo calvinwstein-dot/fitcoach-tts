@@ -563,20 +563,28 @@
           "Yes! Accelerate right now! Feel that power coursing through you! This is YOUR moment to absolutely smash this run!",
           "Dig deep{name}! Give me everything you've got! Thirty seconds of pure, raw effort! Let's gooooo!!",
           "Come on! Pick it up! Show me what you're made of! Powerful strides! You're unstoppable! ENJOY THE BURNNNN!",
-          "Alright{name}, I see you getting a bit comfortable there! Let's turn up the heat! Give me thirty seconds of pure fire!"
+          "Alright{name}, I see you getting a bit comfortable there! Let's turn up the heat! Give me thirty seconds of pure fire!",
+          "Increase cadence by five steps per minute! Achieve that quick turnover! Let's see that efficiency!",
+          "Shorten ground contact! Increase your turnover! Power through with those strong strides!",
+          "Pick up the cadence for sixty seconds{name}! Quick on the feet! Hold a strong form, land under your hips!"
         ],
         slowDown: [
           "Okay{name}, breathe! Nice and easy now. Deep, controlled breaths from the gut. You're doing absolutely amazing! Settle into your rhythm.",
           "Easy does it mate! Bring it down. Two big deep breaths for me. Feel that sweet recovery washing over you. Beautiful work{name}!",
           "Relax those shoulders{name}! Shake it out! You're in complete control! Conserve that precious energy, you're doing a brilliant job!",
-          "Perfect! Ease off now. Let your heart rate come down naturally. You've earned this recovery, legend!",
-          "Whoa there champion! Let's not get carried away! Bring it back down before you blow up like a firework!"
+          "Perfect! Ease off now. Let your heart rate come down naturally. You've earned this recovery, you legend!",
+          "Whoa there champion! Let's not get carried away! Bring it back down before you blow up like a firework!",
+          "Reduce pace by ten percent. Slowly drop your effort. Lengthen your recovery and breathe easy.",
+          "Lower your cadence now. Longer strides. Maintain easy, controlled breathing through your nose.",
+          "Back it off. Reduce your cadence. Focus on form and recovery for now, mate."
         ],
         status: [
           "You're at {dist}{name}! Pace is {pace}, heart rate {hr}. You're looking absolutely strong out there! Keep it rolling!",
           "Crushing it at {dist}! Heart rate {hr}, pace {pace}. Stay locked in and focused! You're doing incredible work!",
           "Wow! {dist} down already! Pace {pace}, heart rate {hr}. This is YOUR run! Keep that beautiful energy high!",
-          "Look at you go! {dist} down, heart rate {hr}, pace {pace}. I mean, not bad for someone who probably hit snooze twice this morning!"
+          "Look at you go! {dist} down, heart rate {hr}, pace {pace}. I mean, not bad for someone who probably hit snooze twice this morning!",
+          "Telemetry check: pace {pace}, heart rate {hr}, distance {dist}. Looking absolutely solid out there!",
+          "Segment complete at {dist}! Pace {pace}, heart rate {hr}. Keep those metrics strong!"
         ]
       },
       calm: {
@@ -605,27 +613,11 @@
           "Boom! {dist} in the bag{name}! Who said running was hard? Oh wait, everyone. But look at you crushing it!",
           "Another one bites the dust! {dist} done{name}. You're making this look way too easy!"
         ]
-      },
-      technical: {
-        push: [
-          "Increase cadence by five steps per minute. Achieve that quick turnover. Let's see that efficiency!",
-          "Shorten ground contact! Increase your turnover! Power through!",
-          "Pick up the cadence for sixty seconds{name}! Quick on the feet! Hold a strong form, land under your hips!"
-        ],
-        slowDown: [
-          "Reduce pace by ten percent. Slowly drop your effort. Lengthen your recovery.",
-          "Lower your cadence now. Longer strides. Maintain easy, controlled breathing.",
-          "Back it off. Reduce your cadence. Focus on form and recovery for now."
-        ],
-        status: [
-          "Telemetry check: pace {pace}, heart rate {hr}, distance {dist}. Systems nominal.",
-          "Segment complete at {dist}. Pace {pace}, heart rate {hr}. Adjust as needed."
-        ]
       }
     }
 
     function chooseTemplate(kind, vars={}, forceStyle=null){
-      // Use motivational/technical combined style only when pace is too slow (>7:30 = 450 seconds)
+      // Use motivational style when pace is too slow (>7:30 = 450 seconds), otherwise use calm
       const usePushStyle = forceStyle === 'push' || (kind === 'push' && pace > 450);
       const style = usePushStyle ? 'motivational' : 'calm';
       const styleSet = templates[style] || templates['calm'];
