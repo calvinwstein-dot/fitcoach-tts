@@ -497,10 +497,14 @@
         });
 
         // Add curated voices to selector
-        availableVoices.forEach(v => {
+        availableVoices.forEach((v, index) => {
           const opt = document.createElement('option');
           opt.value = v.id;
           opt.textContent = v.name;
+          // Set Lily (British female) as default
+          if (v.name.includes('Lily')) {
+            opt.selected = true;
+          }
           select.appendChild(opt);
         });
         
