@@ -467,10 +467,10 @@
         const data = await r.json();
         voices = Array.isArray(data) ? data : (data.voices || []);
         
-        // Curated selection: Chris and Charlotte for hyper-realistic, clear, confident tones
+        // Curated selection: Custom voice from ElevenLabs library
         const curatedVoices = [
-          { name: 'Chris (Male - American)', id: 'iP95p4xoKVk53GoZ742B' },  // Male, casual confident American
-          { name: 'Charlotte (Female - British)', id: 'XB0fDUnXU5powFXDhCwa' }  // Female, clear confident British
+          { name: 'British Male', id: '3yJq5VpFXdeyF5oOBl2e' },  // Male from voice library
+          { name: 'British Female', id: '3yJq5VpFXdeyF5oOBl2e' }  // Female, British accent from voice library
         ];
 
         const select = document.getElementById('voiceSelect');
@@ -501,8 +501,8 @@
           const opt = document.createElement('option');
           opt.value = v.id;
           opt.textContent = v.name;
-          // Set Charlotte (British female) as default
-          if (v.name.includes('Charlotte')) {
+          // Set British Male as default
+          if (v.name.includes('British Male')) {
             opt.selected = true;
           }
           select.appendChild(opt);
