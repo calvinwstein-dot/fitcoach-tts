@@ -467,10 +467,10 @@
         const data = await r.json();
         voices = Array.isArray(data) ? data : (data.voices || []);
         
-        // Curated selection: Jessica and Chris for hyper-realistic, clear, confident tones
+        // Curated selection: Chris and Charlotte for hyper-realistic, clear, confident tones
         const curatedVoices = [
           { name: 'Chris (Male - American)', id: 'iP95p4xoKVk53GoZ742B' },  // Male, casual confident American
-          { name: 'Lily (Female - British)', id: 'pFZP5JQG7iQjIQuC4Bku' }  // Female, clear confident British
+          { name: 'Charlotte (Female - British)', id: 'XB0fDUnXU5powFXDhCwa' }  // Female, clear confident British
         ];
 
         const select = document.getElementById('voiceSelect');
@@ -501,8 +501,8 @@
           const opt = document.createElement('option');
           opt.value = v.id;
           opt.textContent = v.name;
-          // Set Lily (British female) as default
-          if (v.name.includes('Lily')) {
+          // Set Charlotte (British female) as default
+          if (v.name.includes('Charlotte')) {
             opt.selected = true;
           }
           select.appendChild(opt);
