@@ -467,12 +467,10 @@
         const data = await r.json();
         voices = Array.isArray(data) ? data : (data.voices || []);
         
-        // Curated selection: 2 males + 2 females with hyper-realistic, clear, confident tones
+        // Curated selection: Jessica and Chris for hyper-realistic, clear, confident tones
         const curatedVoices = [
-          { name: 'Brian (Male - American)', id: 'nPczCjzI2devNBz1zQrb' },  // Male, deep confident American
           { name: 'Chris (Male - American)', id: 'iP95p4xoKVk53GoZ742B' },  // Male, casual confident American
-          { name: 'Jessica (Female - American)', id: 'cgSgspJ2msm6clMCkdW9' }, // Female, clear confident American
-          { name: 'Nicole (Female - Australian)', id: 'piTKgcLEGmPE4e6mEKli' }  // Female, warm confident Australian
+          { name: 'Jessica (Female - American)', id: 'cgSgspJ2msm6clMCkdW9' }  // Female, clear confident American
         ];
 
         const select = document.getElementById('voiceSelect');
@@ -559,24 +557,24 @@
     const templates = {
       motivational: {
         push: [
-          "Let's go{name}! Push now for thirty seconds! Quick feet, strong arms, you've absolutely got this!",
-          "Yes! Accelerate right now! Feel that power coursing through you! This is YOUR moment to absolutely smash this run!",
-          "Dig deep{name}! Give me everything you've got! Thirty seconds of pure, raw effort! Let's gooooo!!",
-          "Come on! Pick it up! Show me what you're made of! Powerful strides! You're unstoppable! ENJOY THE BUURNNN!",
-          "Alright{name}, I see you getting a bit comfortable there! Let's turn up the heat! Give me thirty seconds of pure fire!",
-          "Increase cadence by five steps per minute! Achieve that quick turnover! Let's see that efficiency!",
-          "Shorten ground contact! Increase your turnover! Power through with those strong strides!",
-          "Pick up the cadence for sixty seconds{name}! Quick on the feet! Hold a strong form, land under your hips!"
+          "<pitch medium>Let's pick it up{name}. Quick feet, strong arms, you've got this.</pitch>",
+          "<pitch medium>Time to accelerate. Feel that power. This is your moment.</pitch>",
+          "<pitch medium>Alright{name}, dig a little deeper now. Give me thirty seconds of solid effort.</pitch>",
+          "<pitch medium-high>Can you pick up the pace a bit? Show me what you're made of.</pitch-high>",
+          "<pitch medium>I see you settling in there{name}. How about we turn up the heat just a touch?</pitch>",
+          "<pitch medium>Increase your cadence by five steps per minute. Quick turnover, efficient movement.</pitch>",
+          "<pitch medium>Shorten that ground contact. Quick feet. Power through with strong strides.</pitch>",
+          "<pitch medium>Pick up the cadence for sixty seconds{name}. Stay light on your feet, strong form.</pitch>"
         ],
         slowDown: [
-          "Okay{name}, breathe! Nice and easy now. Deep, controlled breaths from the gut. You're doing absolutely amazing! Settle into your rhythm.",
-          "Easy does it mate! Bring it down. Two big deep breaths for me. Feel that sweet recovery washing over you. Beautiful work{name}!",
-          "Relax those shoulders{name}! Shake it out! You're in complete control! Conserve that precious energy, you're doing a brilliant job!",
-          "Perfect! Ease off now. Let your heart rate come down naturally. You've earned this recovery, you legend!",
-          "Whoa there champion! Let's not get carried away! Bring it back down before you blow up like a firework!",
-          "Reduce pace by ten percent. Slowly drop your effort. Lengthen your recovery and breathe easy.",
-          "Lower your cadence now. Longer strides. Maintain easy, controlled breathing through your nose.",
-          "Back it off. Reduce your cadence. Focus on form and recovery for now."
+          "<pitch low>Okay{name}, breathe. Nice and easy now. Deep, controlled breaths. Settle into your rhythm.</pitch>",
+          "<pitch low>Easy does it. Bring it down. Two big deep breaths for me. Feel that sweet recovery.</pitch>",
+          "<pitch low>Relax those shoulders{name}. Shake it out. You're in control. Conserve that energy.</pitch>",
+          "<pitch low>Perfect. Ease off now. Let your heart rate come down naturally. You've earned this recovery.</pitch>",
+          "<pitch medium-high>Whoa there, getting a bit carried away? Let's bring it back down.</pitch-high>",
+          "<pitch low>Reduce your pace by ten percent. Slowly drop your effort. Lengthen your recovery.</pitch>",
+          "<pitch low>Lower your cadence now. Longer strides. Easy, controlled breathing.</pitch>",
+          "<pitch low>Back it off. Reduce your cadence. Focus on form and recovery.</pitch>"
         ],
         status: [
           "You're at {dist}{name}! Pace is {pace}, heart rate {hr}. You're looking absolutely strong out there! Keep it rolling!",
@@ -589,29 +587,29 @@
       },
       calm: {
         push: [
-          "Alright{name}, let's pick up the pace just a little bit now! Nice and smooth, you're doing beautifully!",
-          "Great work! Nudge it up just a touch. Stay controlled and relaxed. Perfect form, mate!",
-          "Here we go, a gentle push now! Light on the feet, easy breathing. You've got this completely under control{name}!",
-          "Time to wake up those legs a bit{name}! Nothing crazy, just a nice gentle lift. You've got this!"
+          "<pitch medium>Alright{name}, let's pick up the pace just a little. Nice and smooth.</pitch>",
+          "<pitch medium>Great work. Nudge it up just a touch. Stay controlled and relaxed.</pitch>",
+          "<pitch medium>Here we go, a gentle push now. Light on the feet, easy breathing.</pitch>",
+          "<pitch medium-high>Time to wake up those legs a bit{name}? Nothing crazy, just a gentle lift.</pitch-high>"
         ],
         slowDown: [
-          "Perfect{name}! Ease off gradually now. Breathe through your nose. Long, smooth, controlled breaths from the gut.",
-          "Excellent! Slow down just a touch{name}. Let your heart rate settle naturally. You're doing wonderfully!",
-          "Beautiful running! Take it easy now. Reduce your effort. Really controlled, textbook stuff!",
-          "Easy tiger! Let's bring that intensity down a notch. Save some energy for later, it is all about efficiency!"
+          "<pitch low>Perfect{name}. Ease off gradually now. Breathe through your nose. Long, smooth breaths.</pitch>",
+          "<pitch low>Excellent. Slow down just a touch{name}. Let your heart rate settle naturally.</pitch>",
+          "<pitch low>Beautiful running. Take it easy now. Reduce your effort. Really controlled.</pitch>",
+          "<pitch low>Easy there. Let's bring that intensity down a notch. Save some energy for later.</pitch>"
         ],
         status: [
-          "Looking absolutely on top form{name}! Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this beautiful steady rhythm, keep that engine purring!",
-          "Fantastic work! At {dist} now. Keep this calm, controlled pace going. You're doing amazing{name}!",
-          "Smooth as silk{name}! {dist} down, pace {pace}, heart rate {hr}. This is poetry in motion!",
-          "Well well, {dist} already! Heart rate {hr}, pace {pace}. Someone's been eating their vegetables!"
+          "<pitch medium>Looking great{name}. Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this steady rhythm.</pitch>",
+          "<pitch medium>Fantastic work. At {dist} now. Keep this calm, controlled pace going.</pitch>",
+          "<pitch medium>Smooth running{name}. {dist} down, pace {pace}, heart rate {hr}.</pitch>",
+          "<pitch medium-high>Well well, {dist} already? Heart rate {hr}, pace {pace}. Someone's doing their homework.</pitch-high>"
         ],
         milestone: [
-          "Nice work{name}! You've reached {dist}. Keep that beautiful momentum going and push forward!",
-          "Excellent{name}! {dist} complete. You're looking so strong on those legs!",
-          "Great job{name}! That's {dist} down. Stay focused and keep it up, my friend!",
-          "Boom! {dist} in the bag{name}! Who said running was hard? Oh wait, everyone. But look at you crushing it!",
-          "Another one in the bag! {dist} done{name}. You're making this look way too easy!"
+          "<pitch medium>Nice work{name}. You've reached {dist}. Keep that momentum going.</pitch>",
+          "<pitch medium>Excellent{name}. {dist} complete. You're looking strong.</pitch>",
+          "<pitch medium>Great job{name}. That's {dist} down. Stay focused and keep it up.</pitch>",
+          "<pitch medium-high>{dist} in the bag{name}. Who said running was hard? Look at you.</pitch-high>",
+          "<pitch medium>Another one done. {dist} complete{name}. You're making this look easy.</pitch>"
         ]
       }
     }
