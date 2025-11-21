@@ -373,7 +373,7 @@
 
       <div class="setting-group">
         <label>Voice</label>
-        <select id="voiceSelect"></select>
+        <select id="voiceSelect" onchange="onVoiceChange()"></select>
       </div>
 
       <div class="setting-group">
@@ -402,7 +402,10 @@
       <div class="setting-group">
         <label>Manual Prompt</label>
         <input type="text" id="manualText" placeholder="Type a custom message">
-        <button onclick="speakManual()" style="margin-top: 8px; width: 100%;">Speak</button>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button onclick="speakManual()" style="flex: 1;">Speak</button>
+          <button onclick="pauseAudio()" style="flex: 1;">Pause</button>
+        </div>
       </div>
     </div>
   </div>
@@ -470,7 +473,7 @@
         // Curated selection: Custom voice from ElevenLabs library
         const curatedVoices = [
           { name: 'Mikey', id: '3yJq5VpFXdeyF5oOBl2e' },  // Male from voice library
-          { name: 'Danny', id: 'd9rRtAT3qedrNbvmbykg' },  // Male voice
+          { name: 'Danny', id: 'aGkVQvWUZi16EH8aZJvT' },  // Male voice
           { name: 'Alison', id: '3yJq5VpFXdeyF5oOBl2e' },  // Female, British accent from voice library
           { name: 'Kylie', id: 'miTHcVblZMXYolDQgUgx' }  // Female voice
         ];
@@ -521,10 +524,11 @@
     // TTS FUNCTION
     // ============================================
     async function speakText(text){
-      // Don't speak if already speaking
+      // Stop any currently playing audio when switching voices mid-prompt
+      const player = document.getElementById('player');
       if (isSpeaking) {
-        log('Skipping speech - already playing');
-        return;
+        player.pause();
+        isSpeaking = false;
       }
       
       const voice = document.getElementById('voiceSelect').value || '';
@@ -542,7 +546,6 @@
         if (!r.ok) throw new Error('TTS failed: ' + r.status);
         const blob = await r.blob();
         const src = URL.createObjectURL(blob);
-        const player = document.getElementById('player');
         player.playbackRate = 0.85;  // Slower for clearer pronunciation
         
         // Set up event listeners to track when audio finishes
@@ -554,6 +557,26 @@
       }catch(e){
         log('TTS error: ' + e.message);
         isSpeaking = false;
+      }
+    }
+
+    function pauseAudio(){
+      const player = document.getElementById('player');
+      if (isSpeaking) {
+        player.pause();
+        isSpeaking = false;
+        log('Audio paused');
+      } else {
+        log('No audio playing');
+      }
+    }
+
+    function onVoiceChange(){
+      const voiceName = document.getElementById('voiceSelect').options[document.getElementById('voiceSelect').selectedIndex].text;
+      log('Voice changed to: ' + voiceName);
+      // If audio is currently playing, it will be stopped and can be replayed with new voice
+      if (isSpeaking) {
+        log('Current audio stopped - voice will change on next prompt');
       }
     }
 
@@ -571,9 +594,9 @@
           "<pitch medium>Increase your cadence by five steps per minute. Quick turnover, efficient movement.</pitch>",
           "<pitch medium>Shorten that ground contact. Quick feet. Power through with strong strides.</pitch>",
           "<pitch medium>Pick up the cadence for sixty seconds{name}. Stay light on your feet, strong form.</pitch>",
-          "<pitch medium>You're stronger than you think, so don't give up now. This is where real progress happens.</pitch>",
-          "<pitch medium>Great work, now pick it back up slightly and find a rhythm that feels powerful but still controlled.</pitch>",
-          "<pitch medium-high>Can you give me just ten more seconds of your best effort? Really finish this interval with intention.</pitch-high>"
+          "<pitch medium>You're stronger than you think{name}, so don't give up now. This is where real progress happens.</pitch>",
+          "<pitch medium>Great work{name}, now pick it back up slightly and find a rhythm that feels powerful but still controlled.</pitch>",
+          "<pitch medium-high>Can you give me just ten more seconds of your best effort{name}? Really finish this interval with intention.</pitch-high>"
         ],
         slowDown: [
           "<pitch low>Okay{name}, breathe. Nice and easy now. Deep, controlled breaths. Settle into your rhythm.</pitch>",
@@ -584,9 +607,9 @@
           "<pitch low>Reduce your pace by ten percent. Slowly drop your effort. Lengthen your recovery.</pitch>",
           "<pitch low>Lower your cadence now. Longer strides. Easy, controlled breathing.</pitch>",
           "<pitch low>Back it off. Reduce your cadence. Focus on form and recovery.</pitch>",
-          "<pitch low>Okay, let's slow it down for a moment and gently bring your heart rate down while you keep moving.</pitch>",
-          "<pitch low>Take a deep breath in, and exhale slowly, letting your shoulders relax and your jaw unclench.</pitch>",
-          "<pitch low>If you feel any sharp pain, I want you to ease off immediately and switch to a lighter intensity.</pitch>"
+          "<pitch low>Okay{name}, let's slow it down for a moment and gently bring your heart rate down while you keep moving.</pitch>",
+          "<pitch low>Take a deep breath in{name}, and exhale slowly, letting your shoulders relax and your jaw unclench.</pitch>",
+          "<pitch low>If you feel any sharp pain{name}, I want you to ease off immediately and switch to a lighter intensity.</pitch>"
         ],
         status: [
           "You're at {dist}{name}! Pace is {pace}, heart rate {hr}. You're looking absolutely strong out there! Keep it rolling!",
@@ -604,7 +627,7 @@
           "<pitch medium>Great work. Nudge it up just a touch. Stay controlled and relaxed.</pitch>",
           "<pitch medium>Here we go, a gentle push now. Light on the feet, easy breathing.</pitch>",
           "<pitch medium-high>Time to wake up those legs a bit{name}? Nothing crazy, just a gentle lift.</pitch-high>",
-          "<pitch medium-high>Hey, you're doing great today. Ready to push just a little further with me?</pitch-high>"
+          "<pitch medium-high>Hey{name}, you're doing great today. Ready to push just a little further with me?</pitch-high>"
         ],
         slowDown: [
           "<pitch low>Perfect{name}. Ease off gradually now. Breathe through your nose. Long, smooth breaths.</pitch>",
@@ -617,7 +640,7 @@
           "<pitch medium>Fantastic work. At {dist} now. Keep this calm, controlled pace going.</pitch>",
           "<pitch medium>Smooth running{name}. {dist} down, pace {pace}, heart rate {hr}.</pitch>",
           "<pitch medium-high>Well well, {dist} already? Heart rate {hr}, pace {pace}. Someone's doing their homework.</pitch-high>",
-          "<pitch medium-high>How does your body feel right now? Is your breathing steady or starting to race a bit?</pitch-high>"
+          "<pitch medium-high>How does your body feel right now{name}? Is your breathing steady or starting to race a bit?</pitch-high>"
         ],
         milestone: [
           "<pitch medium>Nice work{name}. You've reached {dist}. Keep that momentum going.</pitch>",
@@ -625,7 +648,7 @@
           "<pitch medium>Great job{name}. That's {dist} down. Stay focused and keep it up.</pitch>",
           "<pitch medium-high>{dist} in the bag{name}. Who said running was hard? Look at you.</pitch-high>",
           "<pitch medium>Another one done. {dist} complete{name}. You're making this look easy.</pitch>",
-          "<pitch medium>Nice job, you crushed that round. Take a moment to be proud of yourself before we move on.</pitch>"
+          "<pitch medium>Nice job{name}, you crushed that round. Take a moment to be proud of yourself before we move on.</pitch>"
         ]
       }
     }
