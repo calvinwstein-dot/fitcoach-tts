@@ -528,6 +528,7 @@
     let demoHr = 120;
     let demoPhase = 0;
     let demoLastKm = 0;
+    let demoLastPromptTime = 0; // Track when last prompt was triggered
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -1082,13 +1083,17 @@
         const currentKm = Math.floor(demoDist);
         if (currentKm > demoLastKm && currentKm > 0 && currentKm <= 5) {
           demoLastKm = currentKm;
-          const msg = chooseTemplate('milestone', {
-            dist: demoDist.toFixed(2),
-            pace: secToMinSec(demoPace),
-            hr: demoHr
-          });
-          speakText(msg);
-          log(`🎯 Demo milestone: ${currentKm} km`);
+          // Only speak if not currently speaking
+          if (!isSpeaking) {
+            const msg = chooseTemplate('milestone', {
+              dist: demoDist.toFixed(2),
+              pace: secToMinSec(demoPace),
+              hr: demoHr
+            });
+            speakText(msg);
+            log(`🎯 Demo milestone: ${currentKm} km`);
+            demoLastPromptTime = demoTime;
+          }
         }
 
         // Move to next phase
@@ -1099,34 +1104,40 @@
           log(`📍 Demo phase: ${currentPhase.phase}`);
         }
 
-        // Trigger prompts based on conditions
-        if (demoTime % 15 === 0) { // Every 15 seconds in demo time
-          const hrPct = demoHr / hrMax;
-          
-          if (hrPct > 0.90) {
-            const msg = chooseTemplate('slowDown', {
-              pace: secToMinSec(demoPace),
-              hr: demoHr,
-              dist: demoDist.toFixed(2)
-            });
-            speakText(msg);
-            log('⚠️ Demo: HR too high prompt');
-          } else if (demoPace > 330) {
-            const msg = chooseTemplate('push', {
-              pace: secToMinSec(demoPace),
-              hr: demoHr,
-              dist: demoDist.toFixed(2)
-            });
-            speakText(msg);
-            log('⚡ Demo: Push harder prompt');
-          } else if (demoTime % 30 === 0) {
-            const msg = chooseTemplate('status', {
-              pace: secToMinSec(demoPace),
-              hr: demoHr,
-              dist: demoDist.toFixed(2)
-            });
-            speakText(msg);
-            log('📊 Demo: Status update');
+        // Trigger prompts based on conditions - only if not speaking and enough time has passed
+        const timeSinceLastPrompt = demoTime - demoLastPromptTime;
+        if (!isSpeaking && timeSinceLastPrompt >= 20) { // Wait at least 20 seconds between prompts
+          if (demoTime % 25 === 0) { // Check every 25 seconds
+            const hrPct = demoHr / hrMax;
+            
+            if (hrPct > 0.90) {
+              const msg = chooseTemplate('slowDown', {
+                pace: secToMinSec(demoPace),
+                hr: demoHr,
+                dist: demoDist.toFixed(2)
+              });
+              speakText(msg);
+              log('⚠️ Demo: HR too high prompt');
+              demoLastPromptTime = demoTime;
+            } else if (demoPace > 330) {
+              const msg = chooseTemplate('push', {
+                pace: secToMinSec(demoPace),
+                hr: demoHr,
+                dist: demoDist.toFixed(2)
+              });
+              speakText(msg);
+              log('⚡ Demo: Push harder prompt');
+              demoLastPromptTime = demoTime;
+            } else if (demoTime % 50 === 0) { // Status updates less frequently
+              const msg = chooseTemplate('status', {
+                pace: secToMinSec(demoPace),
+                hr: demoHr,
+                dist: demoDist.toFixed(2)
+              });
+              speakText(msg);
+              log('📊 Demo: Status update');
+              demoLastPromptTime = demoTime;
+            }
           }
         }
 
@@ -1161,6 +1172,7 @@
       demoHr = 120;
       demoPhase = 0;
       demoLastKm = 0;
+      demoLastPromptTime = 0;
       
       const btn = document.getElementById('demoBtn');
       btn.textContent = '▶️ Start Demo';
