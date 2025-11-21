@@ -429,6 +429,7 @@
     let highHrStartTime = null; // Track when HR goes too high
     let isSpeaking = false; // Track if audio is currently playing
     let usedPrompts = {}; // Track which prompts have been used
+    let lastHrWarningTime = { caution: 0, warning: 0, danger: 0 }; // Track last warning per zone
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -745,38 +746,49 @@
       const pct = hr / hrMax;
       const now = Date.now();
       
-      // Danger: > 95% HRmax
+      // Danger: > 95% HRmax (immediate warning, but only once per 30s)
       if (pct > 0.95) {
-        return {
-          level: 'danger',
-          message: "Your heart rate is extremely high. Stop running now and walk slowly. If you feel unwell, seek medical help."
-        };
+        const timeSinceLastWarning = (now - lastHrWarningTime.danger) / 1000;
+        if (timeSinceLastWarning >= 30) {
+          lastHrWarningTime.danger = now;
+          return {
+            level: 'danger',
+            message: "Your heart rate is extremely high. Stop running now and walk slowly. If you feel unwell, seek medical help."
+          };
+        }
+        return null;
       }
       
-      // Hard warning: > 90% HRmax
+      // Hard warning: > 90% HRmax (after 30s sustained, then repeat every 30s)
       if (pct > 0.9) {
         if (!highHrStartTime) highHrStartTime = now;
         const duration = (now - highHrStartTime) / 1000;
+        const timeSinceLastWarning = (now - lastHrWarningTime.warning) / 1000;
         
-        if (duration > 30) {
+        if (duration > 30 && timeSinceLastWarning >= 30) {
+          lastHrWarningTime.warning = now;
           return {
             level: 'warning',
             message: "Your heart rate is very high. Please slow down or walk until your heart rate drops back to a comfortable level."
           };
         }
+        return null;
       }
       
-      // Caution: > 85% HRmax
+      // Caution: > 85% HRmax (after 60s sustained, then repeat every 30s)
       if (pct > 0.85) {
         if (!highHrStartTime) highHrStartTime = now;
         const duration = (now - highHrStartTime) / 1000;
+        const timeSinceLastWarning = (now - lastHrWarningTime.caution) / 1000;
         
-        if (duration > 60) {
+        if (duration > 60 && timeSinceLastWarning >= 30) {
+          lastHrWarningTime.caution = now;
           return {
             level: 'caution',
             message: "You're working pretty hard now. If this isn't intentional, try slowing your pace."
           };
         }
+        return null;
       } else {
         // Reset timer when HR drops below 85%
         highHrStartTime = null;
