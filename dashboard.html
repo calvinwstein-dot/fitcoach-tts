@@ -288,9 +288,17 @@
       line-height: 1.5;
     }
     .demo-controls {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
+      display: block;
+      width: 100%;
+    }
+    .demo-controls input[type="range"] {
+      display: block;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .demo-controls button {
+      width: auto;
+      display: inline-block;
     }
     .demo-status {
       margin-top: 12px;
@@ -321,6 +329,38 @@
       background: linear-gradient(90deg, var(--btn-primary-start), var(--btn-primary-end));
       width: 0%;
       transition: width 0.3s;
+    }
+    .demo-slider {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e0e0e0 0%, #667eea 100%);
+      outline: none;
+      margin: 0;
+      padding: 0;
+      cursor: pointer;
+    }
+    .demo-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+      border: 2px solid white;
+    }
+    .demo-slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
     }
     
     /* Event Log */
@@ -409,13 +449,13 @@
     <div class="demo-card">
       <h3>🎬 Demo Mode</h3>
       <div class="demo-info">
-        Experience all voice prompts in action with a simulated 5K run (10x speed). Watch as the coach responds to pace changes, heart rate zones, and milestones.
+        Control your virtual 5K run with the slider below. Move through different phases to hear all coaching prompts.
       </div>
       <div class="demo-controls">
-        <button id="demoBtn" onclick="toggleDemo()">▶️ Start Demo</button>
+        <input type="range" id="demoSlider" class="demo-slider" min="0" max="5000" value="0" step="10" oninput="updateDemoFromSlider()">
         <button class="secondary" onclick="resetDemo()">🔄 Reset</button>
       </div>
-      <div class="demo-status" id="demoStatus">
+      <div class="demo-status active" id="demoStatus">
         <div class="demo-progress">
           <span id="demoPhase">Warm-up</span>
           <span id="demoDistance">0.0 km</span>
@@ -520,15 +560,11 @@
     let lastHrWarningTime = { caution: 0, warning: 0, danger: 0 }; // Track last warning per zone
     
     // Demo mode state
-    let demoRunning = false;
-    let demoInterval = null;
-    let demoTime = 0;
     let demoDist = 0;
     let demoPace = 300;
     let demoHr = 120;
-    let demoPhase = 0;
     let demoLastKm = 0;
-    let demoLastPromptTime = 0; // Track when last prompt was triggered
+    let demoLastMilestonePrompt = 0; // Track last milestone that triggered a prompt
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -1025,172 +1061,118 @@
     // ============================================
     // DEMO MODE
     // ============================================
-    function toggleDemo(){
-      demoRunning = !demoRunning;
-      const btn = document.getElementById('demoBtn');
-      const status = document.getElementById('demoStatus');
+    function updateDemoFromSlider(){
+      const slider = document.getElementById('demoSlider');
+      demoDist = Number(slider.value) / 1000; // Convert meters to km
       
-      if (demoRunning) {
-        btn.textContent = '⏸️ Pause Demo';
-        btn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
-        status.classList.add('active');
-        startDemo();
-        log('🎬 Demo started - simulating 5K run');
-      } else {
-        btn.textContent = '▶️ Start Demo';
-        btn.style.background = 'linear-gradient(135deg, var(--btn-primary-start) 0%, var(--btn-primary-end) 100%)';
-        stopDemo();
-        log('Demo paused');
-      }
-    }
-
-    function startDemo(){
+      // Calculate time based on pace and distance (simulated)
+      const demoTime = Math.round(demoDist * demoPace);
+      
       // Demo phases simulate a realistic 5K run
       const phases = [
-        { duration: 30, pace: 330, hrStart: 110, hrEnd: 130, phase: 'Warm-up' },       // 0-300m
-        { duration: 60, pace: 300, hrStart: 130, hrEnd: 145, phase: 'Easy pace' },     // 300-900m
-        { duration: 30, pace: 270, hrStart: 145, hrEnd: 160, phase: 'Picking up' },    // 900-1.2km
-        { duration: 60, pace: 285, hrStart: 160, hrEnd: 155, phase: 'Steady' },        // 1.2-2km
-        { duration: 40, pace: 260, hrStart: 155, hrEnd: 170, phase: 'Strong push' },   // 2-2.6km
-        { duration: 50, pace: 300, hrStart: 170, hrEnd: 150, phase: 'Recovery' },      // 2.6-3.4km
-        { duration: 60, pace: 280, hrStart: 150, hrEnd: 165, phase: 'Maintaining' },   // 3.4-4.2km
-        { duration: 40, pace: 240, hrStart: 165, hrEnd: 185, phase: 'Final sprint!' }  // 4.2-5km
+        { distance: 0.3, pace: 330, hrStart: 110, hrEnd: 130, phase: 'Warm-up' },
+        { distance: 0.9, pace: 300, hrStart: 130, hrEnd: 145, phase: 'Easy pace' },
+        { distance: 1.2, pace: 270, hrStart: 145, hrEnd: 160, phase: 'Picking up' },
+        { distance: 2.0, pace: 285, hrStart: 160, hrEnd: 155, phase: 'Steady' },
+        { distance: 2.6, pace: 260, hrStart: 155, hrEnd: 170, phase: 'Strong push' },
+        { distance: 3.4, pace: 300, hrStart: 170, hrEnd: 150, phase: 'Recovery' },
+        { distance: 4.2, pace: 280, hrStart: 150, hrEnd: 165, phase: 'Maintaining' },
+        { distance: 5.0, pace: 240, hrStart: 165, hrEnd: 185, phase: 'Final sprint!' }
       ];
-
-      let phaseIndex = demoPhase;
-      let phaseTime = 0;
-
-      demoInterval = setInterval(() => {
-        demoTime++;
-        phaseTime++;
-
-        // Get current phase
-        let currentPhase = phases[Math.min(phaseIndex, phases.length - 1)];
-        
-        // Update pace and HR based on phase
-        demoPace = currentPhase.pace;
-        const hrProgress = phaseTime / currentPhase.duration;
-        demoHr = Math.round(currentPhase.hrStart + (currentPhase.hrEnd - currentPhase.hrStart) * hrProgress);
-        
-        // Add natural variation
-        demoHr += Math.round((Math.random() - 0.5) * 4);
-        demoHr = Math.max(100, Math.min(195, demoHr));
-
-        // Update distance
-        demoDist += (1 / demoPace) / 60;
-
-        // Check for kilometer milestones
-        const currentKm = Math.floor(demoDist);
-        if (currentKm > demoLastKm && currentKm > 0 && currentKm <= 5) {
-          demoLastKm = currentKm;
-          // Only speak if not currently speaking
-          if (!isSpeaking) {
-            const msg = chooseTemplate('milestone', {
-              dist: demoDist.toFixed(2),
-              pace: secToMinSec(demoPace),
-              hr: demoHr
-            });
-            speakText(msg);
-            log(`🎯 Demo milestone: ${currentKm} km`);
-            demoLastPromptTime = demoTime;
-          }
+      
+      // Find current phase
+      let currentPhase = phases[0];
+      let prevPhase = phases[0];
+      for (let i = 0; i < phases.length; i++) {
+        if (demoDist <= phases[i].distance) {
+          currentPhase = phases[i];
+          prevPhase = i > 0 ? phases[i - 1] : phases[0];
+          break;
         }
-
-        // Move to next phase
-        if (phaseTime >= currentPhase.duration && phaseIndex < phases.length - 1) {
-          phaseIndex++;
-          phaseTime = 0;
-          currentPhase = phases[phaseIndex];
-          log(`📍 Demo phase: ${currentPhase.phase}`);
-        }
-
-        // Trigger prompts based on conditions - only if not speaking and enough time has passed
-        const timeSinceLastPrompt = demoTime - demoLastPromptTime;
-        if (!isSpeaking && timeSinceLastPrompt >= 20) { // Wait at least 20 seconds between prompts
-          if (demoTime % 25 === 0) { // Check every 25 seconds
-            const hrPct = demoHr / hrMax;
-            
-            if (hrPct > 0.90) {
-              const msg = chooseTemplate('slowDown', {
-                pace: secToMinSec(demoPace),
-                hr: demoHr,
-                dist: demoDist.toFixed(2)
-              });
-              speakText(msg);
-              log('⚠️ Demo: HR too high prompt');
-              demoLastPromptTime = demoTime;
-            } else if (demoPace > 330) {
-              const msg = chooseTemplate('push', {
-                pace: secToMinSec(demoPace),
-                hr: demoHr,
-                dist: demoDist.toFixed(2)
-              });
-              speakText(msg);
-              log('⚡ Demo: Push harder prompt');
-              demoLastPromptTime = demoTime;
-            } else if (demoTime % 50 === 0) { // Status updates less frequently
-              const msg = chooseTemplate('status', {
-                pace: secToMinSec(demoPace),
-                hr: demoHr,
-                dist: demoDist.toFixed(2)
-              });
-              speakText(msg);
-              log('📊 Demo: Status update');
-              demoLastPromptTime = demoTime;
-            }
-          }
-        }
-
-        // Update UI
-        updateDemoDisplay(currentPhase.phase);
-
-        // End demo at 5km
-        if (demoDist >= 5.0) {
-          speakText('Incredible work! Five kilometers complete. That was an amazing run!');
-          log('🎉 Demo complete - 5K finished!');
-          setTimeout(() => {
-            resetDemo();
-          }, 2000);
-        }
-      }, 100); // 10x speed (100ms = 1 second of run time)
-    }
-
-    function stopDemo(){
-      if (demoInterval) {
-        clearInterval(demoInterval);
-        demoInterval = null;
-        demoPhase = Math.floor(demoTime / 40); // Save phase progress
       }
+      
+      // Calculate progress within phase
+      const phaseStart = prevPhase.distance;
+      const phaseEnd = currentPhase.distance;
+      const phaseProgress = (demoDist - phaseStart) / (phaseEnd - phaseStart);
+      
+      // Update pace and HR based on phase
+      demoPace = currentPhase.pace;
+      demoHr = Math.round(currentPhase.hrStart + (currentPhase.hrEnd - currentPhase.hrStart) * phaseProgress);
+      
+      // Check for kilometer milestones
+      const currentKm = Math.floor(demoDist);
+      if (currentKm > demoLastKm && currentKm > 0 && currentKm <= 5) {
+        // Only trigger if we haven't spoken this milestone yet
+        if (currentKm !== demoLastMilestonePrompt) {
+          demoLastKm = currentKm;
+          demoLastMilestonePrompt = currentKm;
+          const msg = chooseTemplate('milestone', {
+            dist: demoDist.toFixed(2),
+            pace: secToMinSec(demoPace),
+            hr: demoHr
+          });
+          speakText(msg);
+          log(`🎯 Demo milestone: ${currentKm} km`);
+        }
+      } else if (currentKm < demoLastKm) {
+        // User moved slider backwards - reset milestone tracking
+        demoLastKm = currentKm;
+        demoLastMilestonePrompt = currentKm;
+      }
+      
+      // Trigger phase-specific prompts
+      if (demoDist >= 2.0 && demoDist < 2.1 && demoLastMilestonePrompt < 20) {
+        demoLastMilestonePrompt = 20; // Mark this special prompt as triggered
+        const msg = chooseTemplate('push', {
+          pace: secToMinSec(demoPace),
+          hr: demoHr,
+          dist: demoDist.toFixed(2)
+        });
+        speakText(msg);
+        log('⚡ Demo: Mid-run push prompt');
+      }
+      
+      if (demoDist >= 4.5 && demoDist < 4.6 && demoLastMilestonePrompt < 45) {
+        demoLastMilestonePrompt = 45; // Mark this special prompt as triggered
+        const msg = chooseTemplate('push', {
+          pace: secToMinSec(demoPace),
+          hr: demoHr,
+          dist: demoDist.toFixed(2)
+        }, 'push');
+        speakText(msg);
+        log('⚡ Demo: Final push prompt');
+      }
+      
+      // Completion message
+      if (demoDist >= 5.0 && demoLastMilestonePrompt < 50) {
+        demoLastMilestonePrompt = 50;
+        speakText('Incredible work! Five kilometers complete. That was an amazing run!');
+        log('🎉 Demo complete - 5K finished!');
+      }
+      
+      // Update UI
+      updateDemoDisplay(currentPhase.phase, demoTime);
     }
 
     function resetDemo(){
-      stopDemo();
-      demoRunning = false;
-      demoTime = 0;
       demoDist = 0;
       demoPace = 300;
       demoHr = 120;
-      demoPhase = 0;
       demoLastKm = 0;
-      demoLastPromptTime = 0;
+      demoLastMilestonePrompt = 0;
       
-      const btn = document.getElementById('demoBtn');
-      btn.textContent = '▶️ Start Demo';
-      btn.style.background = 'linear-gradient(135deg, var(--btn-primary-start) 0%, var(--btn-primary-end) 100%)';
-      
-      const status = document.getElementById('demoStatus');
-      status.classList.remove('active');
-      
-      updateDemoDisplay('Warm-up');
+      document.getElementById('demoSlider').value = 0;
+      updateDemoDisplay('Warm-up', 0);
       log('🔄 Demo reset');
     }
 
-    function updateDemoDisplay(phase){
+    function updateDemoDisplay(phase, time){
       document.getElementById('demoPhase').textContent = phase;
       document.getElementById('demoDistance').textContent = demoDist.toFixed(2) + ' km';
       document.getElementById('demoPace').textContent = secToMinSec(demoPace) + ' /km';
       document.getElementById('demoHR').textContent = demoHr + ' bpm';
-      document.getElementById('demoTime').textContent = secToMinSec(demoTime);
+      document.getElementById('demoTime').textContent = secToMinSec(time);
       
       const progress = (demoDist / 5.0) * 100;
       document.getElementById('demoProgressFill').style.width = Math.min(progress, 100) + '%';
