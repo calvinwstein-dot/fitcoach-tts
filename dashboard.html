@@ -467,46 +467,46 @@
         const data = await r.json();
         voices = Array.isArray(data) ? data : (data.voices || []);
         
-        // Filter for Australian accent voices only
-        const australian = [];
-        const australianNames = ['charlie', 'matilda', 'nicole', 'freya', 'brian', 'chris', 'callum', 'harry'];
-
-        voices.forEach(v=>{
-          const id = v.voice_id || v.id || v.voiceId;
-          const name = (v.name || v.voice_name || id || '').toString().toLowerCase();
-          const labels = v.labels || {};
-          const accent = (labels.accent || '').toString().toLowerCase();
-          
-          // Check if voice is Australian by accent label or name
-          if (accent.includes('australia') || australianNames.some(ausName => name.includes(ausName))) {
-            australian.push({ id, name: v.name || v.voice_name || name });
-          }
-        });
+        // Curated selection: 2 males + 2 females with hyper-realistic, clear, confident tones
+        const curatedVoices = [
+          { name: 'Brian (Male - American)', id: 'nPczCjzI2devNBz1zQrb' },  // Male, deep confident American
+          { name: 'Chris (Male - American)', id: 'iP95p4xoKVk53GoZ742B' },  // Male, casual confident American
+          { name: 'Jessica (Female - American)', id: 'cgSgspJ2msm6clMCkdW9' }, // Female, clear confident American
+          { name: 'Nicole (Female - Australian)', id: 'piTKgcLEGmPE4e6mEKli' }  // Female, warm confident Australian
+        ];
 
         const select = document.getElementById('voiceSelect');
         select.innerHTML = '';
         
-        if (australian.length === 0) {
-          log('No Australian voices found, loading all voices');
-          // Fallback to all voices if no Australian found
-          voices.forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v.voice_id || v.id || v.voiceId;
-            opt.textContent = v.name || v.voice_name || 'Unknown';
-            select.appendChild(opt);
+        // Check which voices from our curated list are actually available
+        const availableVoices = [];
+        curatedVoices.forEach(curated => {
+          const found = voices.find(v => {
+            const id = v.voice_id || v.id || v.voiceId;
+            const name = (v.name || v.voice_name || '').toString().toLowerCase();
+            return id === curated.id || name.includes(curated.name.split(' ')[0].toLowerCase());
           });
-        } else {
-          const group = document.createElement('optgroup');
-          group.label = 'Australian Voices';
-          australian.forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v.id;
-            opt.textContent = v.name;
-            group.appendChild(opt);
-          });
-          select.appendChild(group);
-          log(`Loaded ${australian.length} Australian voices`);
-        }
+          
+          if (found) {
+            availableVoices.push({
+              id: found.voice_id || found.id || found.voiceId,
+              name: curated.name
+            });
+          } else {
+            // Use the curated ID even if not found in list (may still work)
+            availableVoices.push(curated);
+          }
+        });
+
+        // Add curated voices to selector
+        availableVoices.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = v.name;
+          select.appendChild(opt);
+        });
+        
+        log(`Loaded ${availableVoices.length} high-quality voices`);
 
       }catch(e){
         log('Could not load voices: ' + e.message);
@@ -562,7 +562,7 @@
           "Let's go{name}! Push now for thirty seconds! Quick feet, strong arms, you've absolutely got this!",
           "Yes! Accelerate right now! Feel that power coursing through you! This is YOUR moment to absolutely smash this run!",
           "Dig deep{name}! Give me everything you've got! Thirty seconds of pure, raw effort! Let's gooooo!!",
-          "Come on! Pick it up! Show me what you're made of! Powerful strides! You're unstoppable! ENJOY THE BURNNNN!",
+          "Come on! Pick it up! Show me what you're made of! Powerful strides! You're unstoppable! ENJOY THE BUURNNN!",
           "Alright{name}, I see you getting a bit comfortable there! Let's turn up the heat! Give me thirty seconds of pure fire!",
           "Increase cadence by five steps per minute! Achieve that quick turnover! Let's see that efficiency!",
           "Shorten ground contact! Increase your turnover! Power through with those strong strides!",
@@ -576,7 +576,7 @@
           "Whoa there champion! Let's not get carried away! Bring it back down before you blow up like a firework!",
           "Reduce pace by ten percent. Slowly drop your effort. Lengthen your recovery and breathe easy.",
           "Lower your cadence now. Longer strides. Maintain easy, controlled breathing through your nose.",
-          "Back it off. Reduce your cadence. Focus on form and recovery for now, mate."
+          "Back it off. Reduce your cadence. Focus on form and recovery for now."
         ],
         status: [
           "You're at {dist}{name}! Pace is {pace}, heart rate {hr}. You're looking absolutely strong out there! Keep it rolling!",
@@ -596,22 +596,22 @@
         ],
         slowDown: [
           "Perfect{name}! Ease off gradually now. Breathe through your nose. Long, smooth, controlled breaths from the gut.",
-          "Excellent! Slow down just a touch{name}. Let your heart rate settle naturally. You're doing wonderfully my friend!",
+          "Excellent! Slow down just a touch{name}. Let your heart rate settle naturally. You're doing wonderfully!",
           "Beautiful running! Take it easy now. Reduce your effort. Really controlled, textbook stuff!",
-          "Easy tiger! Let's bring that intensity down a notch. Save some energy for later, yeah?"
+          "Easy tiger! Let's bring that intensity down a notch. Save some energy for later, it is all about efficiency!"
         ],
         status: [
           "Looking absolutely on top form{name}! Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this beautiful steady rhythm, keep that engine purring!",
           "Fantastic work! At {dist} now. Keep this calm, controlled pace going. You're doing amazing{name}!",
           "Smooth as silk{name}! {dist} down, pace {pace}, heart rate {hr}. This is poetry in motion!",
-          "Well well, {dist} already! Heart rate {hr}, pace {pace}. Someone's been eating their Weet-Bix!"
+          "Well well, {dist} already! Heart rate {hr}, pace {pace}. Someone's been eating their vegetables!"
         ],
         milestone: [
           "Nice work{name}! You've reached {dist}. Keep that beautiful momentum going and push forward!",
           "Excellent{name}! {dist} complete. You're looking so strong on those legs!",
           "Great job{name}! That's {dist} down. Stay focused and keep it up, my friend!",
           "Boom! {dist} in the bag{name}! Who said running was hard? Oh wait, everyone. But look at you crushing it!",
-          "Another one bites the dust! {dist} done{name}. You're making this look way too easy!"
+          "Another one in the bag! {dist} done{name}. You're making this look way too easy!"
         ]
       }
     }
