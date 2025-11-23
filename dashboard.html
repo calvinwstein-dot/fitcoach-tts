@@ -274,9 +274,6 @@
       margin-bottom: 20px;
       position: relative;
     }
-    .demo-card * {
-      pointer-events: auto;
-    }
     .demo-card h3 {
       margin: 0 0 12px 0;
       font-size: 18px;
@@ -381,7 +378,7 @@
       color: var(--text-primary);
       margin-bottom: 6px;
       font-size: 13px;
-      pointer-events: none;
+      user-select: none;
     }
     .demo-card .setting-group input,
     .demo-card .setting-group select {
@@ -390,12 +387,16 @@
       border-radius: 6px;
       border: 2px solid #e0e0e0;
       font-size: 13px;
-      background: white;
-      color: var(--text-primary);
-      pointer-events: auto !important;
-      cursor: text;
+      background: white !important;
+      color: var(--text-primary) !important;
       position: relative;
       z-index: 10;
+      -webkit-user-select: text !important;
+      user-select: text !important;
+    }
+    .demo-card .setting-group input[type="text"],
+    .demo-card .setting-group input[type="number"] {
+      cursor: text !important;
     }
     .demo-card .setting-group select {
       cursor: pointer !important;
@@ -409,7 +410,6 @@
     .demo-card .setting-group button {
       width: 100%;
       padding: 10px;
-      pointer-events: auto !important;
       cursor: pointer !important;
     }
     
