@@ -469,7 +469,7 @@
           <div class="metric-label">Avg Pace</div>
           <div class="metric-value" id="paceDisplay">5:00</div>
           <div class="metric-unit" id="paceUnit">min/km</div>
-          <input type="range" class="metric-slider" min="240" max="600" value="300" step="5" oninput="pace=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust pace">
+          <input id="paceSlider" type="range" class="metric-slider" min="240" max="600" value="300" step="5" oninput="pace=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust pace">
         </div>
         <div class="metric-item">
           <div class="metric-label">Heart Rate</div>
@@ -478,25 +478,25 @@
             <span class="heart-icon" id="heartIcon">❤️</span>
           </div>
           <div class="metric-unit">bpm</div>
-          <input type="range" class="metric-slider" min="60" max="200" value="140" step="1" oninput="hr=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust heart rate">
+          <input id="hrSlider" type="range" class="metric-slider" min="60" max="200" value="140" step="1" oninput="hr=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust heart rate">
         </div>
         <div class="metric-item">
           <div class="metric-label">Distance</div>
           <div class="metric-value" id="distDisplay">0.00</div>
           <div class="metric-unit" id="distUnit">km</div>
-          <input type="range" class="metric-slider" min="0" max="21" value="0" step="0.1" oninput="dist=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust distance">
+          <input id="distSlider" type="range" class="metric-slider" min="0" max="21" value="0" step="0.1" oninput="dist=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust distance">
         </div>
         <div class="metric-item">
           <div class="metric-label">Time</div>
           <div class="metric-value" id="timeDisplay">0:00</div>
           <div class="metric-unit">min:sec</div>
-          <input type="range" class="metric-slider" min="0" max="7200" value="0" step="1" oninput="time=Number(this.value); updateDisplays()" title="Adjust time">
+          <input id="timeSlider" type="range" class="metric-slider" min="0" max="7200" value="0" step="1" oninput="time=Number(this.value); updateDisplays()" title="Adjust time">
         </div>
       </div>
       
       <div class="controls">
         <button id="startBtn" onclick="toggleRun()">▶️ Start</button>
-        <button class="secondary" onclick="testVoice()">🔊 Test Voice</button>
+        <button id="startTestBtn" class="secondary" onclick="testVoice()">▶️ Start Test Voice</button>
         <button class="secondary" onclick="resetDemo()">🔄 Reset</button>
       </div>
       
@@ -553,8 +553,16 @@
         </div>
 
         <div class="setting-group">
+          <label for="toneSelect">Coach Style</label>
+          <select id="toneSelect">
+            <option value="motivational">Motivational</option>
+            <option value="calm">Calm</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
           <label>Auto Prompts</label>
-          <button id="demoToggleAutoBtn" onclick="toggleAuto()">Enable</button>
+          <input type="checkbox" id="autoPromptsToggle" onchange="toggleAuto()">
         </div>
 
         <div class="setting-group">
@@ -750,114 +758,291 @@
     }
 
     // ============================================
-    // PROMPT TEMPLATES
+    // COACH ENGINE - PROMPT TEMPLATES & LOGIC
     // ============================================
-    const templates = {
+    
+    // All coaching prompts
+    const COACH_PROMPTS = {
       motivational: {
         push: [
-          "<pitch medium>Let's pick it up{name}. Quick feet, strong arms, you've got this.</pitch>",
-          "<pitch medium>Time to accelerate. Feel that power. This is your moment.</pitch>",
-          "<pitch medium>Alright{name}, dig a little deeper now. Give me thirty seconds of solid effort.</pitch>",
-          "<pitch medium-high>Can you pick up the pace a bit? Show me what you're made of.</pitch-high>",
-          "<pitch medium>I see you settling in there{name}. How about we turn up the heat just a touch?</pitch>",
-          "<pitch medium>Increase your cadence by five steps per minute. Quick turnover, efficient movement.</pitch>",
-          "<pitch medium>Shorten that ground contact. Quick feet. Power through with strong strides.</pitch>",
-          "<pitch medium>Pick up the cadence for sixty seconds{name}. Stay light on your feet, strong form.</pitch>",
-          "<pitch medium>You're stronger than you think{name}, so don't give up now. This is where real progress happens.</pitch>",
-          "<pitch medium>Great work{name}, now pick it back up slightly and find a rhythm that feels powerful but still controlled.</pitch>",
-          "<pitch medium-high>Can you give me just ten more seconds of your best effort{name}? Really finish this interval with intention.</pitch-high>"
+          "<pitch high>Let's pick it up{name}. Quick feet, strong arms, you've got this.</pitch>",
+          "<pitch high>Time to accelerate. Feel that power. This is your moment.</pitch>",
+          "<pitch high>Alright{name}, dig a little deeper now. Give me thirty seconds of solid effort.</pitch>",
+          "<pitch high>Can you pick up the pace a bit? Show me what you're made of.</pitch>",
+          "<pitch high>I see you settling in there{name}. How about we turn up the heat just a touch?</pitch>",
+          "<pitch high>Increase your cadence by five steps per minute. Quick turnover, efficient movement.</pitch>",
+          "<pitch high>Shorten that ground contact. Quick feet. Power through with strong strides.</pitch>",
+          "<pitch high>Pick up the cadence for sixty seconds{name}. Stay light on your feet, strong form.</pitch>",
+          "<pitch high>You're stronger than you think{name}, so don't give up now. This is where real progress happens.</pitch>",
+          "<pitch high>Great work{name}, now pick it back up slightly and find a rhythm that feels powerful but still controlled.</pitch>",
+          "<pitch high>Can you give me just ten more seconds of your best effort{name}? Really finish this interval with intention.</pitch>"
         ],
         slowDown: [
-          "<pitch low>Okay{name}, breathe. Nice and easy now. Deep, controlled breaths. Settle into your rhythm.</pitch>",
-          "<pitch low>Easy does it. Bring it down. Two big deep breaths for me. Feel that sweet recovery.</pitch>",
-          "<pitch low>Relax those shoulders{name}. Shake it out. You're in control. Conserve that energy.</pitch>",
-          "<pitch low>Perfect. Ease off now. Let your heart rate come down naturally. You've earned this recovery.</pitch>",
-          "<pitch medium-high>Whoa there, getting a bit carried away? Let's bring it back down.</pitch-high>",
-          "<pitch low>Reduce your pace by ten percent. Slowly drop your effort. Lengthen your recovery.</pitch>",
-          "<pitch low>Lower your cadence now. Longer strides. Easy, controlled breathing.</pitch>",
-          "<pitch low>Back it off. Reduce your cadence. Focus on form and recovery.</pitch>",
-          "<pitch low>Okay{name}, let's slow it down for a moment and gently bring your heart rate down while you keep moving.</pitch>",
-          "<pitch low>Take a deep breath in{name}, and exhale slowly, letting your shoulders relax and your jaw unclench.</pitch>",
-          "<pitch low>If you feel any sharp pain{name}, I want you to ease off immediately and switch to a lighter intensity.</pitch>"
+          "<pitch high>Okay{name}, breathe. Nice and easy now. Deep, controlled breaths. Settle into your rhythm.</pitch>",
+          "<pitch high>Easy does it. Bring it down. Two big deep breaths for me. Feel that sweet recovery.</pitch>",
+          "<pitch high>Relax those shoulders{name}. Shake it out. You're in control. Conserve that energy.</pitch>",
+          "<pitch high>Perfect. Ease off now. Let your heart rate come down naturally. You've earned this recovery.</pitch>",
+          "<pitch high>Whoa there, getting a bit carried away? Let's bring it back down.</pitch>",
+          "<pitch high>Reduce your pace by ten percent. Slowly drop your effort. Lengthen your recovery.</pitch>",
+          "<pitch high>Lower your cadence now. Longer strides. Easy, controlled breathing.</pitch>",
+          "<pitch high>Back it off. Reduce your cadence. Focus on form and recovery.</pitch>",
+          "<pitch high>Okay{name}, let's slow it down for a moment and gently bring your heart rate down while you keep moving.</pitch>",
+          "<pitch high>Take a deep breath in{name}, and exhale slowly, letting your shoulders relax and your jaw unclench.</pitch>",
+          "<pitch high>If you feel any sharp pain{name}, I want you to ease off immediately and switch to a lighter intensity.</pitch>"
         ],
         status: [
-          "You're at {dist}{name}! Pace is {pace}, heart rate {hr}. You're looking absolutely strong out there! Keep it rolling!",
-          "Crushing it at {dist}! Heart rate {hr}, pace {pace}. Stay locked in and focused! You're doing incredible work!",
-          "Wow! {dist} down already! Pace {pace}, heart rate {hr}. This is YOUR run! Keep that beautiful energy high!",
-          "Look at you go! {dist} down, heart rate {hr}, pace {pace}. I mean, not bad for someone who probably hit snooze twice this morning!",
-          "Telemetry check: pace {pace}, heart rate {hr}, distance {dist}. Looking absolutely solid out there!",
-          "Segment complete at {dist}! Pace {pace}, heart rate {hr}. Keep those metrics strong!",
-          "<pitch medium>Awesome pace so far, keep that energy up and stay focused on every single step you take.</pitch>"
+          "<pitch high>You're at {dist}{name}! Pace is {pace}, heart rate {hr}. You're looking absolutely strong out there! Keep it rolling!</pitch>",
+          "<pitch high>Crushing it at {dist}! Heart rate {hr}, pace {pace}. Stay locked in and focused! You're doing incredible work!</pitch>",
+          "<pitch high>Wow! {dist} down already! Pace {pace}, heart rate {hr}. This is YOUR run! Keep that beautiful energy high!</pitch>",
+          "<pitch high>Look at you go! {dist} down, heart rate {hr}, pace {pace}. I mean, not bad for someone who probably hit snooze twice this morning!</pitch>",
+          "<pitch high>Telemetry check: pace {pace}, heart rate {hr}, distance {dist}. Looking absolutely solid out there!</pitch>",
+          "<pitch high>Segment complete at {dist}! Pace {pace}, heart rate {hr}. Keep those metrics strong!</pitch>",
+          "<pitch high>Awesome pace so far, keep that energy up and stay focused on every single step you take.</pitch>"
         ]
       },
       calm: {
         push: [
-          "<pitch medium>Alright{name}, let's pick up the pace just a little. Nice and smooth.</pitch>",
-          "<pitch medium>Great work. Nudge it up just a touch. Stay controlled and relaxed.</pitch>",
-          "<pitch medium>Here we go, a gentle push now. Light on the feet, easy breathing.</pitch>",
-          "<pitch medium-high>Time to wake up those legs a bit{name}? Nothing crazy, just a gentle lift.</pitch-high>",
-          "<pitch medium-high>Hey{name}, you're doing great today. Ready to push just a little further with me?</pitch-high>"
+          "<pitch high>Alright{name}, let's pick up the pace just a little. Nice and smooth.</pitch>",
+          "<pitch high>Great work. Nudge it up just a touch. Stay controlled and relaxed.</pitch>",
+          "<pitch high>Here we go, a gentle push now. Light on the feet, easy breathing.</pitch>",
+          "<pitch high>Time to wake up those legs a bit{name}? Nothing crazy, just a gentle lift.</pitch>",
+          "<pitch high>Hey{name}, you're doing great today. Ready to push just a little further with me?</pitch>"
         ],
         slowDown: [
-          "<pitch low>Perfect{name}. Ease off gradually now. Breathe through your nose. Long, smooth breaths.</pitch>",
-          "<pitch low>Excellent. Slow down just a touch{name}. Let your heart rate settle naturally.</pitch>",
-          "<pitch low>Beautiful running. Take it easy now. Reduce your effort. Really controlled.</pitch>",
-          "<pitch low>Easy there. Let's bring that intensity down a notch. Save some energy for when you need it.</pitch>"
+          "<pitch high>Perfect{name}. Ease off gradually now. Breathe through your nose. Long, smooth breaths.</pitch>",
+          "<pitch high>Excellent. Slow down just a touch{name}. Let your heart rate settle naturally.</pitch>",
+          "<pitch high>Beautiful running. Take it easy now. Reduce your effort. Really controlled.</pitch>",
+          "<pitch high>Easy there. Let's bring that intensity down a notch. Save some energy for when you need it.</pitch>"
         ],
         status: [
-          "<pitch medium>Looking great{name}. Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this steady rhythm.</pitch>",
-          "<pitch medium>Fantastic work. At {dist} now. Keep this calm, controlled pace going.</pitch>",
-          "<pitch medium>Smooth running{name}. {dist} down, pace {pace}, heart rate {hr}.</pitch>",
-          "<pitch medium-high>Well well, {dist} already? Heart rate {hr}, pace {pace}. Someone's doing their homework?</pitch-high>",
-          "<pitch medium-high>How does your body feel right now{name}? Is your breathing steady or starting to race a bit?</pitch-high>"
+          "<pitch high>Looking great{name}. Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this steady rhythm.</pitch>",
+          "<pitch high>Fantastic work. At {dist} now. Keep this calm, controlled pace going.</pitch>",
+          "<pitch high>Smooth running{name}. {dist} down, pace {pace}, heart rate {hr}.</pitch>",
+          "<pitch high>Well well, {dist} already? Heart rate {hr}, pace {pace}. Someone's doing their homework?</pitch>",
+          "<pitch high>How does your body feel right now{name}? Is your breathing steady or starting to race a bit?</pitch>"
         ],
         milestone: [
-          "<pitch medium>Nice work{name}. You've reached {dist}. Keep that momentum going.</pitch>",
-          "<pitch medium>Excellent{name}. {dist} complete. You're looking strong.</pitch>",
-          "<pitch medium>Great job{name}. That's {dist} down. Stay focused and keep it up.</pitch>",
-          "<pitch medium-high>{dist} in the bag{name}. Who said running was hard? Look at you!!</pitch-high>",
-          "<pitch medium>Another one done. {dist} complete{name}. You're making this look easy.</pitch>",
-          "<pitch medium>Nice job{name}, you crushed that round. Take a moment to be proud of yourself before we move on.</pitch>"
+          "<pitch high>Nice work{name}. You've reached {dist}. Keep that momentum going.</pitch>",
+          "<pitch high>Excellent{name}. {dist} complete. You're looking strong.</pitch>",
+          "<pitch high>Great job{name}. That's {dist} down. Stay focused and keep it up.</pitch>",
+          "<pitch high>{dist} in the bag{name}. Who said running was hard? Look at you!!</pitch>",
+          "<pitch high>Another one done. {dist} complete{name}. You're making this look easy.</pitch>",
+          "<pitch high>Nice job{name}, you crushed that round. Take a moment to be proud of yourself before we move on.</pitch>"
         ]
       }
+    };
+    
+    const COACH_TONES = ["motivational", "calm"];
+    
+    // Prompt rotation state (stored in localStorage)
+    let coachPromptUsage = loadPromptUsageState();
+    
+    function loadPromptUsageState() {
+      try {
+        const saved = localStorage.getItem("coach_prompt_usage");
+        return saved ? JSON.parse(saved) : {};
+      } catch (e) {
+        return {};
+      }
     }
-
-    function chooseTemplate(kind, vars={}, forceStyle=null){
-      // Use motivational/technical combined style only when pace is too slow (>7:30 = 450 seconds)
-      const usePushStyle = forceStyle === 'push' || (kind === 'push' && pace > 450);
-      const style = usePushStyle ? 'motivational' : 'calm';
-      const styleSet = templates[style] || templates['calm'];
-      const arr = styleSet[kind] || [kind];
-      let t = arr[Math.floor(Math.random()*arr.length)];
+    
+    function savePromptUsageState() {
+      try {
+        localStorage.setItem("coach_prompt_usage", JSON.stringify(coachPromptUsage));
+      } catch (e) {
+        // ignore
+      }
+    }
+    
+    // Get next prompt in rotation (cycles through sequentially)
+    function getNextPrompt(tone, category) {
+      const toneObj = COACH_PROMPTS[tone];
+      if (!toneObj) return null;
       
-      // Replace variables
-      t = t.replace(/\{(\w+)\}/g,(m,k)=>vars[k] ?? m);
+      const list = toneObj[category];
+      if (!Array.isArray(list) || list.length === 0) return null;
       
-      // Replace name (add space before name if it exists, otherwise empty)
-      t = t.replace(/\{name\}/g, userName ? ' ' + userName : '');
+      if (!coachPromptUsage[tone]) {
+        coachPromptUsage[tone] = {};
+      }
+      const toneUsage = coachPromptUsage[tone];
       
-      // Add unit after distance values and format decimals clearly
+      const idx = toneUsage[category] || 0;
+      const prompt = list[idx % list.length];
+      
+      toneUsage[category] = (idx + 1) % list.length;
+      savePromptUsageState();
+      
+      return prompt;
+    }
+    
+    // Decide which prompt category based on metrics
+    function decideCategory(metrics) {
+      const paceFast = metrics.paceSecPerKm <= 300;  // faster than ~5:00/km
+      const paceSlow = metrics.paceSecPerKm >= 380;  // slower than ~6:20/km
+      
+      const hrHigh = metrics.heartRate >= 170;
+      const hrLow  = metrics.heartRate <= 130;
+      
+      // Too fast / too hot -> slow down
+      if (hrHigh || paceFast) return "slowDown";
+      
+      // Too easy -> push
+      if (hrLow || paceSlow) return "push";
+      
+      // Otherwise -> status
+      return "status";
+    }
+    
+    // Check if we hit a milestone (whole km)
+    let previousDistanceKm = 0;
+    
+    function isMilestone(currentDistanceKm) {
+      const prevWhole = Math.floor(previousDistanceKm);
+      const currentWhole = Math.floor(currentDistanceKm);
+      return currentWhole > prevWhole;
+    }
+    
+    // Format helpers
+    function formatDistanceKm(distKm) {
+      return distKm.toFixed(2) + " km";
+    }
+    
+    function formatPaceDisplay(secPerKm) {
+      const m = Math.floor(secPerKm / 60);
+      const s = Math.round(secPerKm % 60);
+      return m + ":" + String(s).padStart(2, "0") + " min/km";
+    }
+    
+    // Fill template variables
+    function fillPromptTemplate(template, ctx) {
+      let text = template
+        .replace(/{name}/g, ctx.name ? " " + ctx.name : "")
+        .replace(/{dist}/g, formatDistanceKm(ctx.distanceKm))
+        .replace(/{pace}/g, formatPaceDisplay(ctx.paceSecPerKm))
+        .replace(/{hr}/g, ctx.heartRate + " bpm");
+      
+      // Format distance decimals for TTS
       const unitText = unit === 'miles' ? ' miles' : ' kilometers';
-      
-      // Format any standalone distance numbers (with decimals) - match number.number pattern
-      t = t.replace(/\b(\d+)\.(\d+)\b/gi, (match, whole, decimal) => {
+      text = text.replace(/\b(\d+)\.(\d+)\b/gi, (match, whole, decimal) => {
         const decimalSpoken = decimal.split('').map(d => d === '0' ? 'zero' : d).join(', ');
         return `, ${whole}, point, ${decimalSpoken}, ${unitText},`;
       });
       
-      // Format pace with "point" for decimals (e.g., "5:30" -> "5 point 30 per kilometer")
-      t = t.replace(/(\d+):(\d+)/g, (match, min, sec) => {
+      // Format pace for TTS
+      text = text.replace(/(\d+):(\d+)/g, (match, min, sec) => {
         const paceUnit = unit === 'miles' ? 'per mile' : 'per kilometer';
         if (sec === '00') {
           return `, ${min} minutes ${paceUnit},`;
         } else {
-          // Replace zeros with "zero" for clear pronunciation
           const secSpoken = sec.split('').map(d => d === '0' ? 'zero' : d).join(', ');
           return `, ${min}, point, ${secSpoken}, ${paceUnit},`;
         }
       });
       
-      return t;
+      return text;
+    }
+    
+    // Read current metrics from UI
+    function readMetricsFromUI() {
+      // Get sliders
+      const paceSlider = document.getElementById("paceSlider");
+      const hrSlider = document.getElementById("hrSlider");
+      const distSlider = document.getElementById("distSlider");
+      
+      if (!paceSlider || !hrSlider || !distSlider) {
+        console.warn("Metric sliders not found");
+        return null;
+      }
+      
+      // Distance + unit conversion
+      const distUnitText = (document.getElementById("distUnit")?.innerText || "km").toLowerCase();
+      const rawDist = Number(distSlider.value) || 0;
+      const distanceKm = distUnitText.includes("mile") ? rawDist * 1.60934 : rawDist;
+      
+      // Pace + unit conversion
+      const paceUnitText = (document.getElementById("paceUnit")?.innerText || "min/km").toLowerCase();
+      const paceSecPerUnit = Number(paceSlider.value) || 300;
+      const unitFactor = paceUnitText.includes("/mi") ? 1.60934 : 1.0;
+      const paceSecPerKm = paceSecPerUnit / unitFactor;
+      
+      // Heart rate
+      const heartRate = Number(hrSlider.value) || 140;
+      
+      // Name
+      const nameInput = document.getElementById("demoUserName");
+      const name = nameInput ? nameInput.value.trim() : "";
+      
+      // Tone
+      const toneSelect = document.getElementById("toneSelect");
+      let tone = toneSelect ? toneSelect.value : "motivational";
+      if (COACH_TONES.indexOf(tone) === -1) tone = "motivational";
+      
+      return {
+        distanceKm,
+        paceSecPerKm,
+        heartRate,
+        name,
+        tone
+      };
+    }
+    
+    // Main function to generate a coaching line
+    function generateCoachLine() {
+      const metrics = readMetricsFromUI();
+      if (!metrics) return null;
+      
+      const tone = metrics.tone;
+      let category = decideCategory(metrics);
+      
+      // Check for milestone
+      if (tone === "calm" && COACH_PROMPTS.calm.milestone && isMilestone(metrics.distanceKm)) {
+        category = "milestone";
+      }
+      
+      previousDistanceKm = metrics.distanceKm;
+      
+      const rawPrompt = getNextPrompt(tone, category);
+      if (!rawPrompt) return null;
+      
+      const finalText = fillPromptTemplate(rawPrompt, {
+        name: metrics.name,
+        distanceKm: metrics.distanceKm,
+        paceSecPerKm: metrics.paceSecPerKm,
+        heartRate: metrics.heartRate
+      });
+      
+      return finalText;
+    }
+    
+    // Auto prompts interval
+    let autoPromptIntervalId = null;
+    
+    function autoPromptTick() {
+      const line = generateCoachLine();
+      if (!line) return;
+      speakText(line);
+      log("🎙️ Coach: " + line.substring(0, 50) + "...");
+    }
+    
+    function startAutoPrompts() {
+      if (autoPromptIntervalId !== null) return;
+      autoPromptIntervalId = setInterval(autoPromptTick, 30000);
+      log("Auto prompts started (30s intervals)");
+    }
+    
+    function stopAutoPrompts() {
+      if (autoPromptIntervalId === null) return;
+      clearInterval(autoPromptIntervalId);
+      autoPromptIntervalId = null;
+      log("Auto prompts stopped");
+    }
+    
+    function triggerSinglePrompt() {
+      const line = generateCoachLine();
+      if (!line) return;
+      speakText(line);
+      log("🎙️ Test: " + line.substring(0, 50) + "...");
     }
 
     // ============================================
@@ -1004,10 +1189,11 @@
         const currentKm = Math.floor(dist);
         if (currentKm > lastKmMilestone && currentKm > 0) {
           lastKmMilestone = currentKm;
-          const distStr = (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2);
-          const msg = chooseTemplate('milestone', {dist: distStr});
-          speakText(msg);
-          log('🎯 Milestone: ' + currentKm + ' km');
+          const msg = generateCoachLine();
+          if (msg) {
+            speakText(msg);
+            log('🎯 Milestone: ' + currentKm + ' km');
+          }
         }
         
         updateDisplays();
@@ -1030,12 +1216,7 @@
     }
 
     function testVoice(){
-      const msg = chooseTemplate('status', {
-        pace: secToMinSec(pace), 
-        hr, 
-        dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2)
-      });
-      speakText(msg);
+      triggerSinglePrompt();
     }
 
     function speakManual(){
@@ -1044,9 +1225,8 @@
     }
 
     function toggleAuto(){
-      auto = !auto;
-      const btn = document.getElementById('demoToggleAutoBtn');
-      if (btn) btn.textContent = auto ? 'Disable' : 'Enable';
+      const checkbox = document.getElementById('autoPromptsToggle');
+      auto = checkbox ? checkbox.checked : !auto;
       log('Auto prompts ' + (auto ? 'enabled' : 'disabled'));
     }
 
@@ -1054,6 +1234,7 @@
     // MANUAL PROMPT TRIGGERS
     // ============================================
     let lastPromptTrigger = { milestone: 0, hr: 0, pace: 0, status: 0 };
+    let lastSliderValues = { pace: 300, hr: 140, dist: 0 }; // Track previous values
     
     function triggerPrompts(){
       const now = Date.now();
@@ -1061,50 +1242,91 @@
       const hrTarget = Number(document.getElementById('demoTargetHR')?.value) || 150;
       const hrPct = hr / hrMax;
       
+      // Detect which slider changed significantly
+      const paceChange = Math.abs(pace - lastSliderValues.pace);
+      const hrChange = Math.abs(hr - lastSliderValues.hr);
+      const distChange = Math.abs(dist - lastSliderValues.dist);
+      
+      // Update last values
+      lastSliderValues = { pace, hr, dist };
+      
+      // PACE SLIDER TRIGGERS
+      if (paceChange > 20 && (now - lastPromptTrigger.pace > 5000)) {
+        lastPromptTrigger.pace = now;
+        
+        // Pace too slow - push motivation
+        if (pace > targetPace + 30) {
+          const msg = generateCoachLine();
+          if (msg) {
+            speakText(msg);
+            log('⚡ Pace changed: Too slow - motivation');
+          }
+          updateDemoDisplay();
+          return;
+        }
+        // Pace improved - status update
+        else if (pace < targetPace - 20) {
+          const msg = generateCoachLine();
+          if (msg) {
+            speakText(msg);
+            log('✅ Pace changed: Great pace!');
+          }
+          updateDemoDisplay();
+          return;
+        }
+      }
+      
+      // HR SLIDER TRIGGERS
+      if (hrChange > 10 && (now - lastPromptTrigger.hr > 5000)) {
+        lastPromptTrigger.hr = now;
+        
+        // HR too high - slow down
+        if (hrPct > 0.90) {
+          const msg = generateCoachLine();
+          if (msg) {
+            speakText(msg);
+            log('⚠️ HR changed: Too high - slow down');
+          }
+          updateDemoDisplay();
+          return;
+        }
+        // HR in good zone - positive feedback
+        else if (hrPct >= 0.70 && hrPct <= 0.85) {
+          const msg = generateCoachLine();
+          if (msg) {
+            speakText(msg);
+            log('💚 HR changed: Perfect zone!');
+          }
+          updateDemoDisplay();
+          return;
+        }
+        // HR too low - push harder
+        else if (hrPct < 0.65 && dist > 1.0) {
+          const msg = generateCoachLine();
+          if (msg) {
+            speakText(msg);
+            log('⚡ HR changed: Too low - push harder');
+          }
+          updateDemoDisplay();
+          return;
+        }
+      }
+      
+      // DISTANCE SLIDER TRIGGERS
       // Check for kilometer milestones
       const currentKm = Math.floor(dist);
       if (currentKm > 0 && currentKm !== lastPromptTrigger.milestone && (now - lastPromptTrigger.milestone > 3000)) {
         lastPromptTrigger.milestone = currentKm;
-        const msg = chooseTemplate('milestone', {
-          dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2),
-          pace: secToMinSec(pace),
-          hr: hr
-        });
-        speakText(msg);
-        log(`🎯 Milestone: ${currentKm} ${unit}`);
+        const msg = generateCoachLine();
+        if (msg) {
+          speakText(msg);
+          log(`🎯 Milestone: ${currentKm} ${unit}`);
+        }
         updateDemoDisplay();
         return;
       }
       
-      // HR too high warning (>90% HRmax)
-      if (hrPct > 0.90 && (now - lastPromptTrigger.hr > 10000)) {
-        lastPromptTrigger.hr = now;
-        const msg = chooseTemplate('slowDown', {
-          pace: secToMinSec(pace),
-          hr: hr,
-          dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2)
-        });
-        speakText(msg);
-        log('⚠️ HR Warning: Too high - slow down');
-        updateDemoDisplay();
-        return;
-      }
-      
-      // Pace too slow - motivation (>target+30s)
-      if (pace > targetPace + 30 && dist > 1.0 && (now - lastPromptTrigger.pace > 10000)) {
-        lastPromptTrigger.pace = now;
-        const msg = chooseTemplate('push', {
-          pace: secToMinSec(pace),
-          hr: hr,
-          dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2)
-        }, 'push');
-        speakText(msg);
-        log('⚡ Pace Warning: Too slow - motivation');
-        updateDemoDisplay();
-        return;
-      }
-      
-      // Status updates every 5km
+      // Status updates at major milestones (5, 10, 15, 20 km)
       if ([5, 10, 15, 20].includes(currentKm) && currentKm !== lastPromptTrigger.status && (now - lastPromptTrigger.status > 3000)) {
         lastPromptTrigger.status = currentKm;
         const msg = chooseTemplate('status', {
@@ -1147,33 +1369,9 @@
     }
 
     // ============================================
-    // AUTO PROMPTS
+    // AUTO PROMPTS - handled by coach engine
     // ============================================
-    setInterval(()=>{
-      if (!auto || !running) return;
-      const targetPace = parseMinSec(document.getElementById('demoTargetPace')?.value || '5:00');
-      const paceDelta = pace - targetPace;
-      const hrTarget = Number(document.getElementById('demoTargetHR')?.value) || 150;
-
-      // HR too high - tell them to slow down and breathe
-      if (hr > hrTarget + 10){
-        const msg = chooseTemplate('slowDown', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)});
-        speakText(msg);
-        log('⚠️ HR high - instructing to slow down');
-      } 
-      // Pace too slow - tell them to pick it up (will use motivational style automatically)
-      else if (paceDelta > 15) {
-        const msg = chooseTemplate('push', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)});
-        speakText(msg);
-        log('⚡ Pace slow - instructing to speed up');
-      }
-      // Pace too fast - maintain control
-      else if (paceDelta < -15) {
-        const msg = chooseTemplate('status', {pace: secToMinSec(pace), hr, dist: dist.toFixed(2)});
-        speakText(msg);
-        log('📊 Status update');
-      }
-    }, 30000); // Check every 30 seconds to avoid spam
+    // Auto prompts are now managed by startAutoPrompts/stopAutoPrompts functions
 
     // ============================================
     // INITIALIZATION
@@ -1208,6 +1406,29 @@
       updateDemoDisplay();
       log('🔄 Reset complete');
     }
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Auto Prompts toggle
+      var autoToggle = document.getElementById("autoPromptsToggle");
+      if (autoToggle) {
+        autoToggle.addEventListener("change", function (e) {
+          if (e.target.checked) {
+            startAutoPrompts();
+          } else {
+            stopAutoPrompts();
+          }
+        });
+      }
+
+      // Start Test Voice button -> single prompt
+      var startBtn = document.getElementById("startTestBtn");
+      if (startBtn) {
+        startBtn.addEventListener("click", function () {
+          triggerSinglePrompt();
+        });
+      }
+    });
   </script>
 </body>
 </html>
