@@ -363,6 +363,42 @@
       box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
     }
     
+    /* Demo Settings */
+    .demo-card .setting-group {
+      margin-bottom: 16px;
+    }
+    .demo-card .setting-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .demo-card .setting-group input,
+    .demo-card .setting-group select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 2px solid #e0e0e0;
+      font-size: 13px;
+      background: white;
+      color: var(--text-primary);
+      pointer-events: auto;
+      cursor: text;
+    }
+    .demo-card .setting-group select {
+      cursor: pointer;
+    }
+    .demo-card .setting-group input:focus,
+    .demo-card .setting-group select:focus {
+      outline: none;
+      border-color: var(--metric-color);
+    }
+    .demo-card .setting-group button {
+      width: 100%;
+      padding: 10px;
+    }
+    
     /* Event Log */
     .log-card {
       padding: 20px;
@@ -476,22 +512,22 @@
         
         <div class="setting-group">
           <label>Your Name (Optional)</label>
-          <input type="text" id="demoUserName" placeholder="Enter your name" oninput="updateUserName()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+          <input type="text" id="demoUserName" placeholder="Enter your name" oninput="updateUserName()">
         </div>
 
         <div class="setting-group">
           <label>Your Age (for HR zones)</label>
-          <input type="number" id="demoUserAge" value="30" min="18" max="100" oninput="updateAge()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+          <input type="number" id="demoUserAge" value="30" min="18" max="100" oninput="updateAge()">
         </div>
 
         <div class="setting-group">
           <label>Voice</label>
-          <select id="demoVoiceSelect" onchange="onVoiceChange()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;"></select>
+          <select id="demoVoiceSelect" onchange="onVoiceChange()"></select>
         </div>
 
         <div class="setting-group">
           <label>Distance Unit</label>
-          <select id="demoUnitSelect" onchange="updateUnits()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+          <select id="demoUnitSelect" onchange="updateUnits()">
             <option value="km">Kilometers</option>
             <option value="miles">Miles</option>
           </select>
@@ -499,22 +535,22 @@
 
         <div class="setting-group">
           <label>Target Pace</label>
-          <input type="text" id="demoTargetPace" value="5:00" placeholder="5:00" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+          <input type="text" id="demoTargetPace" value="5:00" placeholder="5:00">
         </div>
 
         <div class="setting-group">
           <label>Target Heart Rate (bpm)</label>
-          <input type="number" id="demoTargetHR" value="150" min="60" max="200" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+          <input type="number" id="demoTargetHR" value="150" min="60" max="200">
         </div>
 
         <div class="setting-group">
           <label>Auto Prompts</label>
-          <button id="demoToggleAutoBtn" onclick="toggleAuto()" style="width: 100%; padding: 10px;">Enable</button>
+          <button id="demoToggleAutoBtn" onclick="toggleAuto()">Enable</button>
         </div>
 
         <div class="setting-group">
           <label>Manual Prompt</label>
-          <input type="text" id="demoManualText" placeholder="Type a custom message" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px; margin-bottom: 8px;">
+          <input type="text" id="demoManualText" placeholder="Type a custom message" style="margin-bottom: 8px;">
           <div style="display: flex; gap: 8px;">
             <button onclick="speakManual()" style="flex: 1; padding: 10px;">Speak</button>
             <button onclick="pauseAudio()" style="flex: 1; padding: 10px;">Pause</button>
