@@ -469,6 +469,58 @@
           <span id="demoTime">0:00</span>
         </div>
       </div>
+      
+      <!-- Demo Settings Controls -->
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+        <h4 style="margin: 0 0 16px 0; font-size: 15px; color: var(--text-primary);">⚙️ Demo Settings</h4>
+        
+        <div class="setting-group">
+          <label>Your Name (Optional)</label>
+          <input type="text" id="demoUserName" placeholder="Enter your name" oninput="updateUserName()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+        </div>
+
+        <div class="setting-group">
+          <label>Your Age (for HR zones)</label>
+          <input type="number" id="demoUserAge" value="30" min="18" max="100" oninput="updateAge()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+        </div>
+
+        <div class="setting-group">
+          <label>Voice</label>
+          <select id="demoVoiceSelect" onchange="onVoiceChange()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;"></select>
+        </div>
+
+        <div class="setting-group">
+          <label>Distance Unit</label>
+          <select id="demoUnitSelect" onchange="updateUnits()" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+            <option value="km">Kilometers</option>
+            <option value="miles">Miles</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label>Target Pace</label>
+          <input type="text" id="demoTargetPace" value="5:00" placeholder="5:00" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+        </div>
+
+        <div class="setting-group">
+          <label>Target Heart Rate (bpm)</label>
+          <input type="number" id="demoTargetHR" value="150" min="60" max="200" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px;">
+        </div>
+
+        <div class="setting-group">
+          <label>Auto Prompts</label>
+          <button id="demoToggleAutoBtn" onclick="toggleAuto()" style="width: 100%; padding: 10px;">Enable</button>
+        </div>
+
+        <div class="setting-group">
+          <label>Manual Prompt</label>
+          <input type="text" id="demoManualText" placeholder="Type a custom message" style="width: 100%; padding: 8px; border-radius: 6px; border: 2px solid #e0e0e0; font-size: 13px; margin-bottom: 8px;">
+          <div style="display: flex; gap: 8px;">
+            <button onclick="speakManual()" style="flex: 1; padding: 10px;">Speak</button>
+            <button onclick="pauseAudio()" style="flex: 1; padding: 10px;">Pause</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Event Log -->
@@ -633,16 +685,25 @@
           }
         });
 
-        // Add curated voices to selector
-        availableVoices.forEach((v, index) => {
-          const opt = document.createElement('option');
-          opt.value = v.id;
-          opt.textContent = v.name;
-          // Set Mikey as default
-          if (v.name.includes('Mikey')) {
-            opt.selected = true;
-          }
-          select.appendChild(opt);
+        // Add curated voices to both selectors
+        const selectors = [
+          document.getElementById('voiceSelect'),
+          document.getElementById('demoVoiceSelect')
+        ];
+        
+        selectors.forEach(select => {
+          if (!select) return;
+          select.innerHTML = '';
+          availableVoices.forEach((v, index) => {
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = v.name;
+            // Set Mikey as default
+            if (v.name.includes('Mikey')) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          });
         });
         
         log(`Loaded ${availableVoices.length} high-quality voices`);
@@ -663,7 +724,11 @@
         isSpeaking = false;
       }
       
-      const voice = document.getElementById('voiceSelect').value || '';
+      // Get voice from either selector
+      const modalSelect = document.getElementById('voiceSelect');
+      const demoSelect = document.getElementById('demoVoiceSelect');
+      const voice = (modalSelect && modalSelect.value) || (demoSelect && demoSelect.value) || '';
+      
       // Ultra-realistic settings for natural human speech
       const style = 1.0;       // Maximum expressiveness
       const stability = 0.3;   // Lower for more human-like variation
@@ -704,7 +769,17 @@
     }
 
     function onVoiceChange(){
-      const voiceName = document.getElementById('voiceSelect').options[document.getElementById('voiceSelect').selectedIndex].text;
+      const modalSelect = document.getElementById('voiceSelect');
+      const demoSelect = document.getElementById('demoVoiceSelect');
+      const activeSelect = (modalSelect && modalSelect.value) ? modalSelect : demoSelect;
+      if (!activeSelect) return;
+      
+      // Sync both selects
+      const selectedValue = activeSelect.value;
+      if (modalSelect) modalSelect.value = selectedValue;
+      if (demoSelect) demoSelect.value = selectedValue;
+      
+      const voiceName = activeSelect.options[activeSelect.selectedIndex].text;
       log('Voice changed to: ' + voiceName);
       // If audio is currently playing, it will be stopped and can be replayed with new voice
       if (isSpeaking) {
@@ -765,20 +840,20 @@
           "<pitch low>Perfect{name}. Ease off gradually now. Breathe through your nose. Long, smooth breaths.</pitch>",
           "<pitch low>Excellent. Slow down just a touch{name}. Let your heart rate settle naturally.</pitch>",
           "<pitch low>Beautiful running. Take it easy now. Reduce your effort. Really controlled.</pitch>",
-          "<pitch low>Easy there. Let's bring that intensity down a notch. Save some energy for later.</pitch>"
+          "<pitch low>Easy there. Let's bring that intensity down a notch. Save some energy for when you need it.</pitch>"
         ],
         status: [
           "<pitch medium>Looking great{name}. Current pace {pace}, heart rate {hr}, distance {dist}. Maintain this steady rhythm.</pitch>",
           "<pitch medium>Fantastic work. At {dist} now. Keep this calm, controlled pace going.</pitch>",
           "<pitch medium>Smooth running{name}. {dist} down, pace {pace}, heart rate {hr}.</pitch>",
-          "<pitch medium-high>Well well, {dist} already? Heart rate {hr}, pace {pace}. Someone's doing their homework.</pitch-high>",
+          "<pitch medium-high>Well well, {dist} already? Heart rate {hr}, pace {pace}. Someone's doing their homework?</pitch-high>",
           "<pitch medium-high>How does your body feel right now{name}? Is your breathing steady or starting to race a bit?</pitch-high>"
         ],
         milestone: [
           "<pitch medium>Nice work{name}. You've reached {dist}. Keep that momentum going.</pitch>",
           "<pitch medium>Excellent{name}. {dist} complete. You're looking strong.</pitch>",
           "<pitch medium>Great job{name}. That's {dist} down. Stay focused and keep it up.</pitch>",
-          "<pitch medium-high>{dist} in the bag{name}. Who said running was hard? Look at you.</pitch-high>",
+          "<pitch medium-high>{dist} in the bag{name}. Who said running was hard? Look at you!!</pitch-high>",
           "<pitch medium>Another one done. {dist} complete{name}. You're making this look easy.</pitch>",
           "<pitch medium>Nice job{name}, you crushed that round. Take a moment to be proud of yourself before we move on.</pitch>"
         ]
@@ -852,7 +927,11 @@
     }
 
     function updateUnits(){
-      unit = document.getElementById('unitSelect').value;
+      const modalSelect = document.getElementById('unitSelect');
+      const demoSelect = document.getElementById('demoUnitSelect');
+      unit = (modalSelect && modalSelect.value) || (demoSelect && demoSelect.value) || 'km';
+      if (modalSelect) modalSelect.value = unit;
+      if (demoSelect) demoSelect.value = unit;
       updateDisplays();
       log('Units changed to ' + unit);
     }
@@ -862,12 +941,20 @@
     }
 
     function updateUserName(){
-      userName = document.getElementById('userName').value.trim();
+      const modalInput = document.getElementById('userName');
+      const demoInput = document.getElementById('demoUserName');
+      userName = (modalInput && modalInput.value.trim()) || (demoInput && demoInput.value.trim()) || '';
+      if (modalInput) modalInput.value = userName;
+      if (demoInput) demoInput.value = userName;
       log('Name updated to: ' + (userName || 'None'));
     }
 
     function updateAge(){
-      userAge = Number(document.getElementById('userAge').value) || 30;
+      const modalInput = document.getElementById('userAge');
+      const demoInput = document.getElementById('demoUserAge');
+      userAge = Number((modalInput && modalInput.value) || (demoInput && demoInput.value)) || 30;
+      if (modalInput) modalInput.value = userAge;
+      if (demoInput) demoInput.value = userAge;
       hrMax = 220 - userAge;
       log(`Age: ${userAge}, Max HR: ${hrMax}`);
     }
@@ -1013,13 +1100,19 @@
     }
 
     function speakManual(){
-      const text = document.getElementById('manualText').value || "Keep going!";
+      const modalInput = document.getElementById('manualText');
+      const demoInput = document.getElementById('demoManualText');
+      const text = (modalInput && modalInput.value) || (demoInput && demoInput.value) || "Keep going!";
       speakText(text);
     }
 
     function toggleAuto(){
       auto = !auto;
-      document.getElementById('toggleAutoBtn').textContent = auto ? 'Disable' : 'Enable';
+      const modalBtn = document.getElementById('toggleAutoBtn');
+      const demoBtn = document.getElementById('demoToggleAutoBtn');
+      const text = auto ? 'Disable' : 'Enable';
+      if (modalBtn) modalBtn.textContent = text;
+      if (demoBtn) demoBtn.textContent = text;
       log('Auto prompts ' + (auto ? 'enabled' : 'disabled'));
     }
 
@@ -1028,9 +1121,14 @@
     // ============================================
     setInterval(()=>{
       if (!auto || !running) return;
-      const targetPace = parseMinSec(document.getElementById('targetPace').value || '5:00');
+      const modalPaceInput = document.getElementById('targetPace');
+      const demoPaceInput = document.getElementById('demoTargetPace');
+      const targetPace = parseMinSec((modalPaceInput && modalPaceInput.value) || (demoPaceInput && demoPaceInput.value) || '5:00');
       const paceDelta = pace - targetPace;
-      const hrTarget = Number(document.getElementById('targetHR').value || 150);
+      
+      const modalHrInput = document.getElementById('targetHR');
+      const demoHrInput = document.getElementById('demoTargetHR');
+      const hrTarget = Number((modalHrInput && modalHrInput.value) || (demoHrInput && demoHrInput.value) || 150);
 
       // HR too high - tell them to slow down and breathe
       if (hr > hrTarget + 10){
