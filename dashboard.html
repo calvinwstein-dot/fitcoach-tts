@@ -456,14 +456,20 @@
       <h1>FitCoach</h1>
     </div>
 
-    <!-- Main Metrics Display -->
-    <div class="metrics-card">
+    <!-- Demo Mode Panel -->
+    <div class="demo-card">
+      <h3>🎬 Interactive Demo</h3>
+      <div class="demo-info">
+        Control your virtual 21K (half marathon) run. Adjust metrics to trigger different coaching prompts: milestones, motivation, HR warnings, and status updates.
+      </div>
+      
+      <!-- Metrics Grid -->
       <div class="metrics-grid">
         <div class="metric-item">
           <div class="metric-label">Avg Pace</div>
           <div class="metric-value" id="paceDisplay">5:00</div>
           <div class="metric-unit" id="paceUnit">min/km</div>
-          <input type="range" class="metric-slider" min="240" max="600" value="300" step="5" oninput="pace=Number(this.value); updateDisplays()" title="Adjust pace">
+          <input type="range" class="metric-slider" min="240" max="600" value="300" step="5" oninput="pace=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust pace">
         </div>
         <div class="metric-item">
           <div class="metric-label">Heart Rate</div>
@@ -472,13 +478,13 @@
             <span class="heart-icon" id="heartIcon">❤️</span>
           </div>
           <div class="metric-unit">bpm</div>
-          <input type="range" class="metric-slider" min="60" max="200" value="140" step="1" oninput="hr=Number(this.value); updateDisplays()" title="Adjust heart rate">
+          <input type="range" class="metric-slider" min="60" max="200" value="140" step="1" oninput="hr=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust heart rate">
         </div>
         <div class="metric-item">
           <div class="metric-label">Distance</div>
           <div class="metric-value" id="distDisplay">0.00</div>
           <div class="metric-unit" id="distUnit">km</div>
-          <input type="range" class="metric-slider" min="0" max="20" value="0" step="0.1" oninput="dist=Number(this.value); updateDisplays()" title="Adjust distance">
+          <input type="range" class="metric-slider" min="0" max="21" value="0" step="0.1" oninput="dist=Number(this.value); updateDisplays(); triggerPrompts()" title="Adjust distance">
         </div>
         <div class="metric-item">
           <div class="metric-label">Time</div>
@@ -491,29 +497,19 @@
       <div class="controls">
         <button id="startBtn" onclick="toggleRun()">▶️ Start</button>
         <button class="secondary" onclick="testVoice()">🔊 Test Voice</button>
-      </div>
-    </div>
-
-    <!-- Demo Mode Panel -->
-    <div class="demo-card">
-      <h3>🎬 Demo Mode</h3>
-      <div class="demo-info">
-        Control your virtual 21K (half marathon) run with the slider below. Experience all coaching prompts: milestones, motivation, HR warnings, and status updates.
-      </div>
-      <div class="demo-controls">
-        <input type="range" id="demoSlider" class="demo-slider" min="0" max="21000" value="0" step="50" oninput="updateDemoFromSlider()">
         <button class="secondary" onclick="resetDemo()">🔄 Reset</button>
       </div>
+      
       <div class="demo-status active" id="demoStatus">
         <div class="demo-progress">
-          <span id="demoPhase">Warm-up</span>
+          <span id="demoPhase">Ready</span>
           <span id="demoDistance">0.0 km</span>
         </div>
         <div class="demo-progress-bar">
           <div class="demo-progress-fill" id="demoProgressFill"></div>
         </div>
         <div style="font-size: 12px; color: var(--text-muted);">
-          <span id="demoHR">120 bpm</span> • 
+          <span id="demoHR">140 bpm</span> • 
           <span id="demoPace">5:00 /km</span> • 
           <span id="demoTime">0:00</span>
         </div>
@@ -602,13 +598,6 @@
     let isSpeaking = false; // Track if audio is currently playing
     let usedPrompts = {}; // Track which prompts have been used
     let lastHrWarningTime = { caution: 0, warning: 0, danger: 0 }; // Track last warning per zone
-    
-    // Demo mode state
-    let demoDist = 0;
-    let demoPace = 300;
-    let demoHr = 120;
-    let demoLastKm = 0;
-    let demoLastMilestonePrompt = 0; // Track last milestone that triggered a prompt
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -1062,6 +1051,102 @@
     }
 
     // ============================================
+    // MANUAL PROMPT TRIGGERS
+    // ============================================
+    let lastPromptTrigger = { milestone: 0, hr: 0, pace: 0, status: 0 };
+    
+    function triggerPrompts(){
+      const now = Date.now();
+      const targetPace = parseMinSec(document.getElementById('demoTargetPace')?.value || '5:00');
+      const hrTarget = Number(document.getElementById('demoTargetHR')?.value) || 150;
+      const hrPct = hr / hrMax;
+      
+      // Check for kilometer milestones
+      const currentKm = Math.floor(dist);
+      if (currentKm > 0 && currentKm !== lastPromptTrigger.milestone && (now - lastPromptTrigger.milestone > 3000)) {
+        lastPromptTrigger.milestone = currentKm;
+        const msg = chooseTemplate('milestone', {
+          dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2),
+          pace: secToMinSec(pace),
+          hr: hr
+        });
+        speakText(msg);
+        log(`🎯 Milestone: ${currentKm} ${unit}`);
+        updateDemoDisplay();
+        return;
+      }
+      
+      // HR too high warning (>90% HRmax)
+      if (hrPct > 0.90 && (now - lastPromptTrigger.hr > 10000)) {
+        lastPromptTrigger.hr = now;
+        const msg = chooseTemplate('slowDown', {
+          pace: secToMinSec(pace),
+          hr: hr,
+          dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2)
+        });
+        speakText(msg);
+        log('⚠️ HR Warning: Too high - slow down');
+        updateDemoDisplay();
+        return;
+      }
+      
+      // Pace too slow - motivation (>target+30s)
+      if (pace > targetPace + 30 && dist > 1.0 && (now - lastPromptTrigger.pace > 10000)) {
+        lastPromptTrigger.pace = now;
+        const msg = chooseTemplate('push', {
+          pace: secToMinSec(pace),
+          hr: hr,
+          dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2)
+        }, 'push');
+        speakText(msg);
+        log('⚡ Pace Warning: Too slow - motivation');
+        updateDemoDisplay();
+        return;
+      }
+      
+      // Status updates every 5km
+      if ([5, 10, 15, 20].includes(currentKm) && currentKm !== lastPromptTrigger.status && (now - lastPromptTrigger.status > 3000)) {
+        lastPromptTrigger.status = currentKm;
+        const msg = chooseTemplate('status', {
+          pace: secToMinSec(pace),
+          hr: hr,
+          dist: (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2)
+        });
+        speakText(msg);
+        log(`📊 Status update: ${currentKm}km`);
+        updateDemoDisplay();
+        return;
+      }
+      
+      updateDemoDisplay();
+    }
+    
+    function updateDemoDisplay(){
+      document.getElementById('demoPhase').textContent = getPhase();
+      document.getElementById('demoDistance').textContent = (unit === 'miles' ? kmToMiles(dist) : dist).toFixed(2) + ' ' + unit;
+      document.getElementById('demoPace').textContent = secToMinSec(pace) + ' /' + unit;
+      document.getElementById('demoHR').textContent = hr + ' bpm';
+      document.getElementById('demoTime').textContent = secToMinSec(time);
+      
+      const progress = (dist / 21.0) * 100;
+      document.getElementById('demoProgressFill').style.width = Math.min(progress, 100) + '%';
+    }
+    
+    function getPhase(){
+      if (dist < 1) return 'Warm-up';
+      if (dist < 3) return 'Easy pace';
+      if (dist < 5) return 'Finding rhythm';
+      if (dist < 8) return 'Steady tempo';
+      if (dist < 10.5) return 'Halfway push';
+      if (dist < 13) return 'Recovery phase';
+      if (dist < 16) return 'Building up';
+      if (dist < 18) return 'Strong push';
+      if (dist < 20) return 'Almost there';
+      if (dist >= 21) return 'Complete!';
+      return 'Final push!';
+    }
+
+    // ============================================
     // AUTO PROMPTS
     // ============================================
     setInterval(()=>{
@@ -1101,162 +1186,27 @@
     // ============================================
     // DEMO MODE
     // ============================================
-    function updateDemoFromSlider(){
-      const slider = document.getElementById('demoSlider');
-      demoDist = Number(slider.value) / 1000; // Convert meters to km
-      
-      // Calculate time based on pace and distance (simulated)
-      const demoTime = Math.round(demoDist * demoPace);
-      
-      // Demo phases simulate a realistic 21K (half marathon) run
-      const phases = [
-        { distance: 1.0, pace: 360, hrStart: 110, hrEnd: 125, phase: 'Warm-up' },
-        { distance: 3.0, pace: 310, hrStart: 125, hrEnd: 140, phase: 'Easy pace' },
-        { distance: 5.0, pace: 290, hrStart: 140, hrEnd: 150, phase: 'Finding rhythm' },
-        { distance: 8.0, pace: 280, hrStart: 150, hrEnd: 160, phase: 'Steady tempo' },
-        { distance: 10.5, pace: 270, hrStart: 160, hrEnd: 170, phase: 'Halfway push' },
-        { distance: 13.0, pace: 285, hrStart: 170, hrEnd: 165, phase: 'Recovery phase' },
-        { distance: 16.0, pace: 275, hrStart: 165, hrEnd: 172, phase: 'Building up' },
-        { distance: 18.0, pace: 260, hrStart: 172, hrEnd: 178, phase: 'Strong push' },
-        { distance: 20.0, pace: 255, hrStart: 178, hrEnd: 182, phase: 'Almost there' },
-        { distance: 21.0, pace: 240, hrStart: 182, hrEnd: 188, phase: 'Final push!' }
-      ];
-      
-      // Find current phase
-      let currentPhase = phases[0];
-      let prevPhase = phases[0];
-      for (let i = 0; i < phases.length; i++) {
-        if (demoDist <= phases[i].distance) {
-          currentPhase = phases[i];
-          prevPhase = i > 0 ? phases[i - 1] : phases[0];
-          break;
-        }
-      }
-      
-      // Calculate progress within phase
-      const phaseStart = prevPhase.distance;
-      const phaseEnd = currentPhase.distance;
-      const phaseProgress = (demoDist - phaseStart) / (phaseEnd - phaseStart);
-      
-      // Update pace and HR based on phase
-      demoPace = currentPhase.pace;
-      demoHr = Math.round(currentPhase.hrStart + (currentPhase.hrEnd - currentPhase.hrStart) * phaseProgress);
-      
-      // Check for kilometer milestones (every km from 1-21)
-      const currentKm = Math.floor(demoDist);
-      if (currentKm > demoLastKm && currentKm > 0 && currentKm <= 21) {
-        // Only trigger if we haven't spoken this milestone yet
-        if (currentKm !== demoLastMilestonePrompt) {
-          demoLastKm = currentKm;
-          demoLastMilestonePrompt = currentKm;
-          const msg = chooseTemplate('milestone', {
-            dist: demoDist.toFixed(2),
-            pace: secToMinSec(demoPace),
-            hr: demoHr
-          });
-          speakText(msg);
-          log(`🎯 Demo milestone: ${currentKm} km`);
-        }
-      } else if (currentKm < demoLastKm) {
-        // User moved slider backwards - reset milestone tracking
-        demoLastKm = currentKm;
-        demoLastMilestonePrompt = currentKm;
-      }
-      
-      // HR Warning prompts (when HR is in high zones)
-      const hrPct = demoHr / hrMax;
-      if (hrPct > 0.90 && demoDist > 1.0) {
-        // High HR zone - trigger slow down prompt
-        const kmKey = 100 + currentKm; // Use 100+ to avoid conflict with milestone prompts
-        if (demoLastMilestonePrompt < kmKey || (demoLastMilestonePrompt > kmKey + 50)) {
-          demoLastMilestonePrompt = kmKey;
-          const msg = chooseTemplate('slowDown', {
-            pace: secToMinSec(demoPace),
-            hr: demoHr,
-            dist: demoDist.toFixed(2)
-          });
-          speakText(msg);
-          log('⚠️ Demo: HR too high - slow down prompt');
-        }
-      }
-      
-      // Motivation/Push prompts (when pace is slow)
-      if (demoPace > 320 && demoDist > 2.0 && demoDist < 19.0) {
-        // Slow pace - trigger motivation
-        const kmKey = 200 + currentKm;
-        if (demoLastMilestonePrompt < kmKey || (demoLastMilestonePrompt > kmKey + 50)) {
-          demoLastMilestonePrompt = kmKey;
-          const msg = chooseTemplate('push', {
-            pace: secToMinSec(demoPace),
-            hr: demoHr,
-            dist: demoDist.toFixed(2)
-          });
-          speakText(msg);
-          log('⚡ Demo: Pace slow - motivation prompt');
-        }
-      }
-      
-      // Status update prompts (every 5km)
-      if ([5, 10, 15].includes(currentKm)) {
-        const kmKey = 300 + currentKm;
-        if (demoLastMilestonePrompt < kmKey || (demoLastMilestonePrompt > kmKey + 50)) {
-          demoLastMilestonePrompt = kmKey;
-          const msg = chooseTemplate('status', {
-            pace: secToMinSec(demoPace),
-            hr: demoHr,
-            dist: demoDist.toFixed(2)
-          });
-          speakText(msg);
-          log('📊 Demo: Status update');
-        }
-      }
-      
-      // Final sprint motivation
-      if (demoDist >= 20.0 && demoDist < 20.2) {
-        if (demoLastMilestonePrompt < 400) {
-          demoLastMilestonePrompt = 400;
-          const msg = chooseTemplate('push', {
-            pace: secToMinSec(demoPace),
-            hr: demoHr,
-            dist: demoDist.toFixed(2)
-          }, 'push');
-          speakText(msg);
-          log('⚡ Demo: Final kilometer motivation!');
-        }
-      }
-      
-      // Completion message
-      if (demoDist >= 21.0 && demoLastMilestonePrompt < 500) {
-        demoLastMilestonePrompt = 500;
-        speakText('Incredible work! Twenty-one kilometers complete. You just finished a half marathon! Outstanding effort!');
-        log('🎉 Demo complete - 21K finished!');
-      }
-      
-      // Update UI
-      updateDemoDisplay(currentPhase.phase, demoTime);
-    }
-
+    // DEMO RESET
+    // ============================================
     function resetDemo(){
-      demoDist = 0;
-      demoPace = 300;
-      demoHr = 120;
-      demoLastKm = 0;
-      demoLastMilestonePrompt = 0;
+      pace = 300;
+      hr = 140;
+      dist = 0;
+      time = 0;
+      lastPromptTrigger = { milestone: 0, hr: 0, pace: 0, status: 0 };
+      lastKmMilestone = 0;
       
-      document.getElementById('demoSlider').value = 0;
-      updateDemoDisplay('Warm-up', 0);
-      log('🔄 Demo reset');
-    }
-
-    function updateDemoDisplay(phase, time){
-      document.getElementById('demoPhase').textContent = phase;
-      document.getElementById('demoDistance').textContent = demoDist.toFixed(2) + ' km';
-      document.getElementById('demoPace').textContent = secToMinSec(demoPace) + ' /km';
-      document.getElementById('demoHR').textContent = demoHr + ' bpm';
-      document.getElementById('demoTime').textContent = secToMinSec(time);
+      // Reset sliders
+      document.querySelectorAll('.metric-slider').forEach((slider, idx) => {
+        if (idx === 0) slider.value = 300; // pace
+        if (idx === 1) slider.value = 140; // hr
+        if (idx === 2) slider.value = 0;   // dist
+        if (idx === 3) slider.value = 0;   // time
+      });
       
-      const progress = (demoDist / 21.0) * 100;
-      document.getElementById('demoProgressFill').style.width = Math.min(progress, 100) + '%';
+      updateDisplays();
+      updateDemoDisplay();
+      log('🔄 Reset complete');
     }
   </script>
 </body>
