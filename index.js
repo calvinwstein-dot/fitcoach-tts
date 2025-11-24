@@ -189,7 +189,17 @@ app.post('/vital/link-token', async (req, res) => {
     console.log('🔍 Region:', VITAL_REGION, 'Environment:', VITAL_ENVIRONMENT);
     
     // First, create or get user
-    const apiUrl = VITAL_REGION === 'eu' ? `https://api-${VITAL_ENVIRONMENT}-eu.tryvital.io` : `https://api.${VITAL_ENVIRONMENT}.tryvital.io`;
+    // EU sandbox uses: api.sandbox.eu.tryvital.io (not api-sandbox-eu)
+    let apiUrl;
+    if (VITAL_REGION === 'eu') {
+      apiUrl = VITAL_ENVIRONMENT === 'sandbox' 
+        ? 'https://api.sandbox.eu.tryvital.io'
+        : 'https://api.eu.tryvital.io';
+    } else {
+      apiUrl = VITAL_ENVIRONMENT === 'sandbox'
+        ? 'https://api.sandbox.tryvital.io'
+        : 'https://api.tryvital.io';
+    }
     console.log('🔍 API URL:', apiUrl);
     const userResponse = await fetch(`${apiUrl}/v2/user`, {
       method: 'POST',
