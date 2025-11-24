@@ -613,23 +613,6 @@
   <audio id="player" style="display:none"></audio>
 
   <script>
-    // Load Vital Link SDK dynamically
-    (function() {
-      const script = document.createElement('script');
-      script.src = 'https://link.tryvital.io/link.js';
-      script.async = true;
-      script.onload = function() {
-        console.log('✅ Vital Link SDK loaded successfully');
-        window.vitalSDKLoaded = true;
-      };
-      script.onerror = function() {
-        console.error('❌ Failed to load Vital Link SDK');
-      };
-      document.head.appendChild(script);
-    })();
-  </script>
-
-  <script>
     // ============================================
     // STATE & CONFIGURATION
     // ============================================
@@ -1509,13 +1492,6 @@
     // ============================================
     async function connectVitalDevice() {
       try {
-        // Check if Vital Link SDK is loaded
-        if (typeof VitalLink === 'undefined' || !window.vitalSDKLoaded) {
-          log('❌ Vital Link SDK not loaded. Retrying in 1 second...');
-          setTimeout(connectVitalDevice, 1000);
-          return;
-        }
-        
         log('⏳ Getting link token...');
         
         // Get link token from backend
@@ -1530,31 +1506,39 @@
         const data = await response.json();
         vitalUserId = data.user_id;
         
-        // Initialize Vital Link
-        const config = {
-          env: 'sandbox',
-          region: 'eu',
-          onSuccess: (metadata) => {
+        // Open Link Web URL in popup
+        const linkUrl = data.link_web_url;
+        const width = 500;
+        const height = 700;
+        const left = (screen.width / 2) - (width / 2);
+        const top = (screen.height / 2) - (height / 2);
+        
+        const popup = window.open(
+          linkUrl,
+          'VitalLink',
+          `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+        );
+        
+        if (!popup) {
+          throw new Error('Popup blocked. Please allow popups for this site.');
+        }
+        
+        // Listen for popup close or message
+        const checkPopup = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkPopup);
+            // Assume success if popup was closed
             vitalConnected = true;
-            document.getElementById('terraDeviceName').textContent = metadata.provider || 'Device';
+            document.getElementById('terraDeviceName').textContent = 'Device';
             document.getElementById('terraStatus').style.display = 'block';
             document.getElementById('connectDeviceBtn').style.display = 'none';
             
             // Connect WebSocket for real-time data
             connectWebSocket();
             
-            log('✅ Connected to ' + (metadata.provider || 'device'));
-          },
-          onExit: (metadata) => {
-            log('⚠️ Connection cancelled');
-          },
-          onError: (metadata) => {
-            log('❌ Connection failed: ' + (metadata.error || 'Unknown error'));
+            log('✅ Device connected');
           }
-        };
-        
-        // Open Vital Link widget
-        window.vitalLink = VitalLink.open(data.link_token, config);
+        }, 500);
         
       } catch (error) {
         log('❌ Vital connection error: ' + error.message);

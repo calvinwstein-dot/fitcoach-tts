@@ -242,6 +242,7 @@ app.post('/vital/link-token', async (req, res) => {
     
     res.json({
       link_token: linkData.link_token,
+      link_web_url: `https://link.tryvital.io/?token=${linkData.link_token}&env=${VITAL_ENVIRONMENT}&region=${VITAL_REGION}`,
       user_id: vitalUserId
     });
   } catch (error) {
