@@ -612,8 +612,22 @@
 
   <audio id="player" style="display:none"></audio>
 
-  <!-- Vital Link SDK -->
-  <script src="https://link.tryvital.io/link.js"></script>
+  <script>
+    // Load Vital Link SDK dynamically
+    (function() {
+      const script = document.createElement('script');
+      script.src = 'https://link.tryvital.io/link.js';
+      script.async = true;
+      script.onload = function() {
+        console.log('✅ Vital Link SDK loaded successfully');
+        window.vitalSDKLoaded = true;
+      };
+      script.onerror = function() {
+        console.error('❌ Failed to load Vital Link SDK');
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
 
   <script>
     // ============================================
@@ -1496,7 +1510,7 @@
     async function connectVitalDevice() {
       try {
         // Check if Vital Link SDK is loaded
-        if (typeof VitalLink === 'undefined') {
+        if (typeof VitalLink === 'undefined' || !window.vitalSDKLoaded) {
           log('❌ Vital Link SDK not loaded. Retrying in 1 second...');
           setTimeout(connectVitalDevice, 1000);
           return;
