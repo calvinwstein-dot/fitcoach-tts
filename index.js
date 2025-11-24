@@ -185,8 +185,12 @@ app.post('/vital/link-token', async (req, res) => {
     const { client_user_id } = req.body;
     const userId = client_user_id || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    console.log('🔍 Creating Vital user. API Key:', VITAL_API_KEY ? `${VITAL_API_KEY.substring(0, 10)}...` : 'MISSING');
+    console.log('🔍 Region:', VITAL_REGION, 'Environment:', VITAL_ENVIRONMENT);
+    
     // First, create or get user
     const apiUrl = VITAL_REGION === 'eu' ? `https://api-${VITAL_ENVIRONMENT}-eu.tryvital.io` : `https://api.${VITAL_ENVIRONMENT}.tryvital.io`;
+    console.log('🔍 API URL:', apiUrl);
     const userResponse = await fetch(`${apiUrl}/v2/user`, {
       method: 'POST',
       headers: {
@@ -198,8 +202,9 @@ app.post('/vital/link-token', async (req, res) => {
 
     if (!userResponse.ok) {
       const error = await userResponse.text();
-      console.error('Vital user creation error:', error);
-      return res.status(500).json({ error: 'Failed to create Vital user' });
+      console.error('❌ Vital user creation error. Status:', userResponse.status);
+      console.error('❌ Response:', error);
+      return res.status(500).json({ error: 'Failed to create Vital user', details: error });
     }
 
     const userData = await userResponse.json();
@@ -217,8 +222,9 @@ app.post('/vital/link-token', async (req, res) => {
 
     if (!linkResponse.ok) {
       const error = await linkResponse.text();
-      console.error('Vital link token error:', error);
-      return res.status(500).json({ error: 'Failed to create link token' });
+      console.error('❌ Vital link token error. Status:', linkResponse.status);
+      console.error('❌ Response:', error);
+      return res.status(500).json({ error: 'Failed to create link token', details: error });
     }
 
     const linkData = await linkResponse.json();
