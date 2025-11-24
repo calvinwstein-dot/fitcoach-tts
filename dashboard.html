@@ -613,7 +613,7 @@
   <audio id="player" style="display:none"></audio>
 
   <!-- Vital Link SDK -->
-  <script src="https://link.tryvital.io/v3"></script>
+  <script src="https://link.tryvital.io/link.js"></script>
 
   <script>
     // ============================================
@@ -1495,6 +1495,13 @@
     // ============================================
     async function connectVitalDevice() {
       try {
+        // Check if Vital Link SDK is loaded
+        if (typeof VitalLink === 'undefined') {
+          log('❌ Vital Link SDK not loaded. Retrying in 1 second...');
+          setTimeout(connectVitalDevice, 1000);
+          return;
+        }
+        
         log('⏳ Getting link token...');
         
         // Get link token from backend
