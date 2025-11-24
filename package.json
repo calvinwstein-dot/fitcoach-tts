@@ -9,13 +9,20 @@
     "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["tts","elevenlabs","fitcoach","audio","tts-server"],
+  "keywords": [
+    "tts",
+    "elevenlabs",
+    "fitcoach",
+    "audio",
+    "tts-server"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/node": "^22.13.11",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "express-ws": "^5.0.2",
     "node-fetch": "^3.3.2"
   }
 }

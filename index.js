@@ -1,12 +1,25 @@
 // index.js (Replit-ready, with CORS + node-fetch v2)
 const express = require("express");
 const cors = require("cors");
+const expressWs = require("express-ws");
 const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
+const crypto = require("crypto");
 const app = express();
+
+// Add WebSocket support
+expressWs(app);
 
 // Constants
 const DEFAULT_VOICE = "21m00Tcm4TlvDq8ikWAM";
 const DEFAULT_MODEL = "eleven_multilingual_v2";
+
+// Vital API configuration
+const VITAL_API_KEY = process.env.VITAL_API_KEY || 'sk_eu_tktCIHP7kL4b-mq7f9wBcOTkvB6w3upLDaCDqshWk-8';
+const VITAL_ENVIRONMENT = process.env.VITAL_ENVIRONMENT || 'sandbox';
+const VITAL_REGION = process.env.VITAL_REGION || 'eu';
+
+// Store WebSocket connections by userId
+const wsConnections = new Map();
 
 // Simple in-memory cache
 const cache = new Map();
@@ -28,10 +41,14 @@ const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY || 'dfd16d29e66b3bd218e543f42a
 console.log('Environment check:');
 console.log('- PORT:', PORT);
 console.log('- ELEVEN_API_KEY:', ELEVEN_API_KEY ? '✅ Set (length: ' + ELEVEN_API_KEY.length + ')' : '❌ NOT SET');
+console.log('- VITAL_API_KEY:', VITAL_API_KEY ? '✅ Set' : '❌ NOT SET');
+console.log('- VITAL_ENVIRONMENT:', VITAL_ENVIRONMENT);
+console.log('- VITAL_REGION:', VITAL_REGION);
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 // --- CORS (keep) ---
 app.use(cors()); // allow all origins
+app.use(express.json()); // parse JSON body
 app.use(express.static('.')); // serve static files
 
 app.get("/", (_req, res) => res.send("TTS server is running!"));
@@ -156,6 +173,133 @@ app.get(['/tts', '/tts.mp3'], async (req, res) => {
   } catch (e) {
     res.status(500).send(String(e.message || e));
   }
+});
+
+// ============================================
+// VITAL API ENDPOINTS
+// ============================================
+
+// Generate Vital link token
+app.post('/vital/link-token', async (req, res) => {
+  try {
+    const { client_user_id } = req.body;
+    const userId = client_user_id || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // First, create or get user
+    const userResponse = await fetch(`https://api.${VITAL_ENVIRONMENT}.tryvital.io/v2/user`, {
+      method: 'POST',
+      headers: {
+        'x-vital-api-key': VITAL_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ client_user_id: userId })
+    });
+
+    if (!userResponse.ok) {
+      const error = await userResponse.text();
+      console.error('Vital user creation error:', error);
+      return res.status(500).json({ error: 'Failed to create Vital user' });
+    }
+
+    const userData = await userResponse.json();
+    const vitalUserId = userData.user_id;
+    
+    // Generate link token
+    const linkResponse = await fetch(`https://api.${VITAL_ENVIRONMENT}.tryvital.io/v2/link/token`, {
+      method: 'POST',
+      headers: {
+        'x-vital-api-key': VITAL_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ user_id: vitalUserId })
+    });
+
+    if (!linkResponse.ok) {
+      const error = await linkResponse.text();
+      console.error('Vital link token error:', error);
+      return res.status(500).json({ error: 'Failed to create link token' });
+    }
+
+    const linkData = await linkResponse.json();
+    console.log('✅ Vital link token created for user:', vitalUserId);
+    
+    res.json({
+      link_token: linkData.link_token,
+      user_id: vitalUserId
+    });
+  } catch (error) {
+    console.error('Vital link token error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Vital webhook for real-time data
+app.post('/vital/webhook', async (req, res) => {
+  try {
+    const webhook = req.body;
+    console.log('📥 Vital webhook received:', webhook.event_type);
+
+    // Handle different webhook types
+    if (webhook.event_type === 'daily.data.activity.created' || 
+        webhook.event_type === 'daily.data.workout.created') {
+      const userId = webhook.user_id;
+      const data = webhook.data;
+      
+      // Extract real-time metrics from activity/workout data
+      const metrics = {
+        heart_rate: data.average_hr || data.hr_avg || null,
+        pace_sec_per_km: data.moving_time && data.distance 
+          ? (data.moving_time / (data.distance / 1000))
+          : null,
+        distance_km: data.distance ? (data.distance / 1000) : null,
+        elapsed_time_sec: data.active_duration || data.duration || null,
+        calories: data.calories_total || data.active_calories || null,
+        start_time: data.calendar_date || null
+      };
+
+      // Send to connected WebSocket client
+      const ws = wsConnections.get(userId);
+      if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify(metrics));
+        console.log('📤 Sent metrics to client:', userId);
+      } else {
+        console.log('⚠️ No active WebSocket for user:', userId);
+      }
+    }
+
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('Vital webhook error:', error);
+    res.status(500).send('Error processing webhook');
+  }
+});
+
+// ============================================
+// WEBSOCKET ENDPOINT
+// ============================================
+app.ws('/ws', (ws, req) => {
+  const userId = req.query.userId;
+  
+  if (!userId) {
+    ws.close(1008, 'User ID required');
+    return;
+  }
+
+  wsConnections.set(userId, ws);
+  console.log('🔗 WebSocket connected:', userId);
+
+  ws.on('message', (msg) => {
+    console.log('📨 WebSocket message:', msg);
+  });
+
+  ws.on('close', () => {
+    wsConnections.delete(userId);
+    console.log('🔌 WebSocket disconnected:', userId);
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+  });
 });
 
 app.listen(PORT, () => console.log(`✅ TTS server running on ${PORT}`));

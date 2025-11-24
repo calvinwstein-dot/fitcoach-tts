@@ -458,8 +458,21 @@
 
     <!-- Demo Mode Panel -->
     <div class="demo-card">
-      <h3>🎬 Interactive Demo</h3>
-      <div class="demo-info">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0;">
+          <span id="modeIcon">🎬</span>
+          <span id="modeTitle">Demo Mode</span>
+        </h3>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button id="connectDeviceBtn" onclick="connectVitalDevice()" style="padding: 8px 16px; font-size: 13px; display: none;">
+            🔗 Connect Device
+          </button>
+          <button id="modeToggleBtn" onclick="toggleMode()" style="padding: 8px 16px; font-size: 13px;">
+            📡 Switch to Live Mode
+          </button>
+        </div>
+      </div>
+      <div class="demo-info" id="modeInfo">
         Control your virtual 21K (half marathon) run. Adjust metrics to trigger different coaching prompts: milestones, motivation, HR warnings, and status updates.
       </div>
       
@@ -498,6 +511,20 @@
         <button id="startBtn" onclick="toggleRun()">▶️ Start</button>
         <button id="startTestBtn" class="secondary" onclick="testVoice()">▶️ Start Test Voice</button>
         <button class="secondary" onclick="resetDemo()">🔄 Reset</button>
+      </div>
+      
+      <!-- Terra Connection Status -->
+      <div id="terraStatus" style="display: none; margin-top: 16px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 13px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span style="font-size: 20px;">✅</span>
+          <strong>Connected: <span id="terraDeviceName">Unknown Device</span></strong>
+        </div>
+        <div style="color: var(--text-muted);">
+          Receiving real-time data from your device
+        </div>
+        <button onclick="disconnectVital()" style="margin-top: 8px; padding: 6px 12px; font-size: 12px; background: #f44336;">
+          Disconnect
+        </button>
       </div>
       
       <div class="demo-status active" id="demoStatus">
@@ -585,10 +612,18 @@
 
   <audio id="player" style="display:none"></audio>
 
+  <!-- Vital Link SDK -->
+  <script src="https://link.tryvital.io/v3"></script>
+
   <script>
     // ============================================
     // STATE & CONFIGURATION
     // ============================================
+    let isLiveMode = false; // false = demo mode, true = live mode
+    let vitalConnected = false;
+    let vitalUserId = null;
+    let ws = null; // WebSocket connection
+    
     let pace = 300; // seconds per km (5:00)
     let hr = 140;
     let dist = 0.0;
@@ -1405,6 +1440,174 @@
       updateDisplays();
       updateDemoDisplay();
       log('🔄 Reset complete');
+    }
+
+    // ============================================
+    // MODE TOGGLE (DEMO vs LIVE)
+    // ============================================
+    function toggleMode() {
+      isLiveMode = !isLiveMode;
+      const btn = document.getElementById('modeToggleBtn');
+      const icon = document.getElementById('modeIcon');
+      const title = document.getElementById('modeTitle');
+      const info = document.getElementById('modeInfo');
+      const sliders = document.querySelectorAll('.metric-slider');
+      const connectBtn = document.getElementById('connectDeviceBtn');
+      
+      if (isLiveMode) {
+        // Switch to LIVE mode
+        btn.textContent = '🎬 Switch to Demo Mode';
+        icon.textContent = '📡';
+        title.textContent = 'Live Mode';
+        info.textContent = 'Connect your fitness device to receive real-time coaching during your workout.';
+        
+        // Hide sliders in live mode
+        sliders.forEach(slider => {
+          slider.style.display = 'none';
+        });
+        
+        // Show connect device button if not connected
+        if (!vitalConnected) {
+          connectBtn.style.display = 'inline-block';
+        }
+        
+        log('📡 Switched to Live Mode');
+      } else {
+        // Switch to DEMO mode
+        btn.textContent = '📡 Switch to Live Mode';
+        icon.textContent = '🎬';
+        title.textContent = 'Demo Mode';
+        info.textContent = 'Control your virtual 21K (half marathon) run. Adjust metrics to trigger different coaching prompts.';
+        
+        // Show sliders in demo mode
+        sliders.forEach(slider => {
+          slider.style.display = 'block';
+        });
+        
+        connectBtn.style.display = 'none';
+        
+        log('🎬 Switched to Demo Mode');
+      }
+    }
+
+    // ============================================
+    // VITAL API INTEGRATION
+    // ============================================
+    async function connectVitalDevice() {
+      try {
+        log('⏳ Getting link token...');
+        
+        // Get link token from backend
+        const response = await fetch('/vital/link-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_user_id: 'demo-user-' + Date.now() })
+        });
+        
+        if (!response.ok) throw new Error('Failed to get link token');
+        
+        const data = await response.json();
+        vitalUserId = data.user_id;
+        
+        // Initialize Vital Link
+        const config = {
+          env: 'sandbox',
+          region: 'us',
+          onSuccess: (metadata) => {
+            vitalConnected = true;
+            document.getElementById('terraDeviceName').textContent = metadata.provider || 'Device';
+            document.getElementById('terraStatus').style.display = 'block';
+            document.getElementById('connectDeviceBtn').style.display = 'none';
+            
+            // Connect WebSocket for real-time data
+            connectWebSocket();
+            
+            log('✅ Connected to ' + (metadata.provider || 'device'));
+          },
+          onExit: (metadata) => {
+            log('⚠️ Connection cancelled');
+          },
+          onError: (metadata) => {
+            log('❌ Connection failed: ' + (metadata.error || 'Unknown error'));
+          }
+        };
+        
+        // Open Vital Link widget
+        window.vitalLink = VitalLink.open(data.link_token, config);
+        
+      } catch (error) {
+        log('❌ Vital connection error: ' + error.message);
+      }
+    }
+
+    function disconnectVital() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      
+      vitalConnected = false;
+      vitalUserId = null;
+      document.getElementById('terraStatus').style.display = 'none';
+      
+      if (isLiveMode) {
+        document.getElementById('connectDeviceBtn').style.display = 'inline-block';
+      }
+      
+      log('❌ Disconnected from device');
+    }
+
+    // ============================================
+    // WEBSOCKET FOR REAL-TIME DATA
+    // ============================================
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws?userId=${vitalUserId}`;
+      
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        log('🔗 Real-time data stream connected');
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // Update metrics with real data from Terra
+          if (data.heart_rate !== undefined) {
+            hr = data.heart_rate;
+          }
+          
+          if (data.pace_sec_per_km !== undefined) {
+            pace = data.pace_sec_per_km;
+          }
+          
+          if (data.distance_km !== undefined) {
+            dist = data.distance_km;
+          }
+          
+          if (data.elapsed_time_sec !== undefined) {
+            time = data.elapsed_time_sec;
+          }
+          
+          // Update display
+          updateDisplays();
+          triggerPrompts();
+          
+        } catch (error) {
+          console.error('WebSocket data error:', error);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        log('❌ WebSocket error');
+        console.error('WebSocket error:', error);
+      };
+      
+      ws.onclose = () => {
+        log('🔌 Real-time data stream disconnected');
+      };
     }
   </script>
   <script>
