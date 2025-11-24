@@ -186,7 +186,8 @@ app.post('/vital/link-token', async (req, res) => {
     const userId = client_user_id || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // First, create or get user
-    const userResponse = await fetch(`https://api.${VITAL_ENVIRONMENT}.tryvital.io/v2/user`, {
+    const apiUrl = VITAL_REGION === 'eu' ? `https://api-${VITAL_ENVIRONMENT}-eu.tryvital.io` : `https://api.${VITAL_ENVIRONMENT}.tryvital.io`;
+    const userResponse = await fetch(`${apiUrl}/v2/user`, {
       method: 'POST',
       headers: {
         'x-vital-api-key': VITAL_API_KEY,
@@ -205,7 +206,7 @@ app.post('/vital/link-token', async (req, res) => {
     const vitalUserId = userData.user_id;
     
     // Generate link token
-    const linkResponse = await fetch(`https://api.${VITAL_ENVIRONMENT}.tryvital.io/v2/link/token`, {
+    const linkResponse = await fetch(`${apiUrl}/v2/link/token`, {
       method: 'POST',
       headers: {
         'x-vital-api-key': VITAL_API_KEY,
