@@ -14,9 +14,9 @@ const DEFAULT_VOICE = "21m00Tcm4TlvDq8ikWAM";
 const DEFAULT_MODEL = "eleven_multilingual_v2";
 
 // Vital API configuration
-const VITAL_API_KEY = process.env.VITAL_API_KEY || 'sk_eu_tktCIHP7kL4b-mq7f9wBcOTkvB6w3upLDaCDqshWk-8';
+const VITAL_API_KEY = process.env.VITAL_API_KEY;
 const VITAL_ENVIRONMENT = process.env.VITAL_ENVIRONMENT || 'sandbox';
-const VITAL_REGION = process.env.VITAL_REGION || 'eu';
+const VITAL_REGION = process.env.VITAL_REGION || 'us';
 
 // Store WebSocket connections by userId
 const wsConnections = new Map();
@@ -34,17 +34,26 @@ function cacheSet(key, value) {
 }
 const PORT = process.env.PORT || 5000;
 
-// API key with fallback
-const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY || 'dfd16d29e66b3bd218e543f42a265fe67b55ea14469abb4c79e76c7016277aef';
+// API key - REQUIRED
+const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY;
 
 // Log environment status
 console.log('Environment check:');
 console.log('- PORT:', PORT);
 console.log('- ELEVEN_API_KEY:', ELEVEN_API_KEY ? '✅ Set (length: ' + ELEVEN_API_KEY.length + ')' : '❌ NOT SET');
-console.log('- VITAL_API_KEY:', VITAL_API_KEY ? '✅ Set' : '❌ NOT SET');
+console.log('- VITAL_API_KEY:', VITAL_API_KEY ? '✅ Set' : '❌ NOT SET (optional - required for live mode)');
 console.log('- VITAL_ENVIRONMENT:', VITAL_ENVIRONMENT);
 console.log('- VITAL_REGION:', VITAL_REGION);
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
+
+// Validate required API keys
+if (!ELEVEN_API_KEY) {
+  console.error('\n❌ ERROR: ELEVEN_API_KEY environment variable is required!');
+  console.error('Please set your ElevenLabs API key:');
+  console.error('  export ELEVEN_API_KEY="your_api_key_here"');
+  console.error('\nOr create a .env file (see .env.example)\n');
+  process.exit(1);
+}
 
 // --- CORS (keep) ---
 app.use(cors()); // allow all origins
